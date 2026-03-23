@@ -3,6 +3,8 @@ from dotenv import set_key, load_dotenv
 import webbrowser
 import os
 from urllib.parse import urlencode
+from datetime import timedelta
+
 
 load_dotenv()
 
@@ -68,7 +70,34 @@ def refresh_tokens():
         print(e)
         return False
     
-def fetch_oura_data(url: str, params: dict):
-    response = requests.get(url=url, headers=HEADERS, params=params)
-    response.raise_for_status()
-    return response.json()
+def shift_date(date: object):
+    """Shifting date paramter by one day back"""
+    return date - timedelta(days=1)
+
+    
+def fetch_oura_data(url: str, params: dict, retries: int = 3):
+    headers = {
+        "Authorization": f"Bearer {os.getenv('ACCESS_TOKEN')}"
+    }
+
+    for _ in range(retries):
+        response = requests.get(url=url, headers=headers, params=params)
+        response.raise_for_status()
+
+        data = response.json()
+
+        if response.status_code == 200 and len(data["data"]) > 0:
+            return data
+        if response.status_code == 401:
+            refresh_tokens()
+        if response.status_code == 403:
+            return {"status_code": response.status_code, "description": "the requested resources requires additional permissions or the user's Oura subscription has expired."}
+        if response.status_code == 429:
+            return {"Message": "Wait 5 minutes for data retrieval"}
+        
+        if len(data["data"]) == 0:
+            print(f"Paramters: {params} are not available yet.")
+            params["start_date"] = shift_date(params["start_date"])
+            params["end_date"] = shift_date(params["end_date"])
+
+    return {"error": "no data found"}

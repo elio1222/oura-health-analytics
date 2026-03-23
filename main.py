@@ -13,7 +13,6 @@ app = FastAPI()
 
 
 """Daily Sleep Routes"""
-
 @app.get("/sleep/")
 async def get_sleep(start_date: str, end_date: str):
     """Get sleep data from specified start and end dates
@@ -27,12 +26,8 @@ async def get_sleep(start_date: str, end_date: str):
         "start_date": start_date, 
         "end_date": end_date 
     }
-    headers = { 
-    "Authorization": f"Bearer {os.getenv("ACCESS_TOKEN")}" 
-    }
-    response = requests.get(url, headers=headers, params=params) 
-    
-    return "response.json()"
+
+    return fetch_oura_data(url=url, params=params)
 
 @app.get("/sleep/latest")
 def get_latest_sleep():
@@ -41,24 +36,11 @@ def get_latest_sleep():
     today = date.today()
     url = "https://api.ouraring.com/v2/usercollection/daily_sleep"
     headers = {"Authorization": F"Bearer {os.getenv('ACCESS_TOKEN')}"}
-    retries = 3
-
-    for _ in range(retries):
-        params = {
-            "start_date": today,
-            "end_date": today
-        }
-
-        response = requests.get(url=url, headers=headers, params=params, timeout=2)
-        response.raise_for_status()
-
-        data = response.json()
-
-        if len(data["data"]) > 0:
-            return data
-        else:
-            print(f"no available data for {today}")
-            today = today - timedelta(days=1)
+    params = {
+        "start_date": today,
+        "end_date": today
+    }
+    return fetch_oura_data(url=url, params=params)
 
 @app.get("/sleep/summary")
 def get_sleep_summary():
@@ -68,13 +50,12 @@ def get_sleep_summary():
     start_date = end_date - timedelta(days=7)
 
     url = "https://api.ouraring.com/v2/usercollection/daily_sleep"
-    headers = {"Authorization": F"Bearer {os.getenv('ACCESS_TOKEN')}"}
     params = {
         "start_date": start_date,
         "end_date": end_date
     }
-    response = requests.get(url=url, headers=headers, params=params)
-    data = response.json()
+    data = fetch_oura_data(url=url, params=params)
+    
     score = 0
     for d in data["data"]:
         score += d["score"]
@@ -102,23 +83,13 @@ def get_latest_sleep_routes():
     today = date.today()
     yesterday = today - timedelta(days=1)
     url = "https://api.ouraring.com/v2/usercollection/sleep"
-    retries = 3
 
-    for _ in range(retries):
-        params = {
-            "start_date": yesterday,
-            "end_date": today
-        }
+    params = {
+    "start_date": yesterday,
+    "end_date": today
+    }
 
-        response = requests.get(url=url, headers={"Authorization": f"Bearer {os.getenv('ACCESS_TOKEN')}"}, params=params)
-        data = response.json()
-
-        if len(data["data"]) > 0:
-            return data
-        else:
-            print(f"no available data for {today}")
-            today = today - timedelta(days=1)
-            yesterday = yesterday - timedelta(days=1)
+    return fetch_oura_data(url=url, params=params)
 
 
 """Readiness Routes"""
@@ -135,12 +106,8 @@ async def get_readiness(start_date: str, end_date: str):
         "start_date": start_date, 
         "end_date": end_date 
     }
-    headers = { 
-    "Authorization": f"Bearer {os.getenv("ACCESS_TOKEN")}" 
-    }
-    response = requests.get(url, headers=headers, params=params) 
-    
-    return response.json()
+
+    return fetch_oura_data(url=url, params=params)
 
 @app.get("/readiness/latest")
 def get_readiness_sleep():
@@ -149,21 +116,8 @@ def get_readiness_sleep():
     today = date.today()
     url = "https://api.ouraring.com/v2/usercollection/daily_readiness"
     headers = {"Authorization": F"Bearer {os.getenv('ACCESS_TOKEN')}"}
-    retries = 3
-
-    for _ in range(retries):
-        params = {
-            "start_date": today,
-            "end_date": today
-        }
-
-        response = requests.get(url=url, headers=headers, params=params, timeout=2)
-        response.raise_for_status()
-
-        data = response.json()
-
-        if len(data["data"]) > 0:
-            return data
-        else:
-            print(f"no available data for {today}")
-            today = today - timedelta(days=1)
+    params = { 
+        "start_date": today, 
+        "end_date": today 
+    }
+    return fetch_oura_data(url=url, params=params)
