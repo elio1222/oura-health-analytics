@@ -99,22 +99,26 @@ def get_sleep_routes(start_date: str, end_date: str):
 
 @app.get("/sleep/routes/latest")
 def get_latest_sleep_routes():
-    today = date.today() - timedelta(days=4)
+    today = date.today()
+    yesterday = today - timedelta(days=1)
     url = "https://api.ouraring.com/v2/usercollection/sleep"
-    params = {
-        "start_date": today,
-        "end_date": today
-    }
-    data = fetch_oura_data(url=url, params=params)
+    retries = 3
 
-    while len(data["data"]) == 0:
-        today = today - timedelta(days=1)
-        new_params = {
-            "start_date": today,
+    for _ in range(retries):
+        params = {
+            "start_date": yesterday,
             "end_date": today
         }
-        print(f"Sleep Routes from {today + timedelta(days=1)} is not available")
-        data = fetch_oura_data(url=url, params=new_params)
+
+        response = requests.get(url=url, headers={"Authorization": f"Bearer {os.getenv('ACCESS_TOKEN')}"}, params=params)
+        data = response.json()
+
+        if len(data["data"]) > 0:
+            return data
+        else:
+            print(f"no available data for {today}")
+            today = today - timedelta(days=1)
+            yesterday = yesterday - timedelta(days=1)
 
 
 """Readiness Routes"""
