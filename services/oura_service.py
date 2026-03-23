@@ -6,7 +6,8 @@ from urllib.parse import urlencode
 
 load_dotenv()
 
-env_path = ".env"
+ENV_PATH = ".env"
+HEADERS = {"Authorization": f"Bearer {os.getenv("ACCESS_TOKEN")}"}
 
 def run():
     auth_params = {
@@ -22,8 +23,8 @@ def run():
     webbrowser.open(auth_url)
 
 def write_tokens(access_token, refresh_token):
-    set_key(env_path, "ACCESS_TOKEN", access_token)
-    set_key(env_path, "REFRESH_TOKEN", refresh_token)
+    set_key(ENV_PATH, "ACCESS_TOKEN", access_token)
+    set_key(ENV_PATH, "REFRESH_TOKEN", refresh_token)
 
 def get_tokens(code: str):
     auth_code = code
@@ -66,3 +67,8 @@ def refresh_tokens():
     except Exception as e:
         print(e)
         return False
+    
+def fetch_oura_data(url: str, params: dict):
+    response = requests.get(url=url, headers=HEADERS, params=params)
+    response.raise_for_status()
+    return response.json()
