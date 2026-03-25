@@ -1,10 +1,7 @@
 from fastapi import FastAPI
-import json
 from dotenv import load_dotenv
 import os
-import requests
-from pydantic import BaseModel
-from datetime import date, timedelta
+from datetime import date, timedelta, timezone, datetime
 from services.oura_service import fetch_oura_data
 
 load_dotenv()
@@ -144,4 +141,18 @@ def get_latest_activity():
 """Personal Info"""
 
 """Heart Rate"""
+@app.get("/bpm/")
+def get_bpm():
+    now = datetime.now().astimezone()
+    earlier = now - timedelta(minutes=60)
+    now = now.replace(microsecond=0).isoformat()
+    earlier = earlier.replace(microsecond=0).isoformat()
+    url = "https://api.ouraring.com/v2/usercollection/heartrate"
+
+    params = {
+        "start_datetime": earlier,
+        "end_datetime": now
+    }
+    print(params)
+    return fetch_oura_data(url=url, params=params)
 """Sleep Time"""

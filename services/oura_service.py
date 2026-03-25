@@ -97,7 +97,7 @@ def fetch_oura_data(url: str, params: dict, retries: int = 3):
         
         if len(data["data"]) == 0:
             print(f"Paramters: {params} are not available yet.")
-            params["start_date"] = shift_date(params["start_date"])
-            params["end_date"] = shift_date(params["end_date"])
+            params["start_date"] = shift_date(params["start_date"]) if params.get("start_date") else None
+            params["end_date"] = shift_date(params["end_date"]) if params.get("end_date") else None
 
     return {"error": "no data found"}
