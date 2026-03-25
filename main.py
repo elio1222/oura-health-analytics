@@ -31,7 +31,6 @@ def get_latest_sleep():
 
     today = date.today()
     url = "https://api.ouraring.com/v2/usercollection/daily_sleep"
-    headers = {"Authorization": F"Bearer {os.getenv('ACCESS_TOKEN')}"}
     params = {
         "start_date": today,
         "end_date": today
@@ -111,7 +110,6 @@ def get_readiness_sleep():
 
     today = date.today()
     url = "https://api.ouraring.com/v2/usercollection/daily_readiness"
-    headers = {"Authorization": F"Bearer {os.getenv('ACCESS_TOKEN')}"}
     params = { 
         "start_date": today, 
         "end_date": today 
@@ -139,6 +137,15 @@ def get_latest_activity():
     return fetch_oura_data(url=url, params=params)
 
 """Personal Info"""
+@app.get("/info/")
+def get_personal_info():
+    today = date.today()
+    url = "https://api.ouraring.com/v2/usercollection/personal_info"
+    params = {
+        "start_date": today,
+        "end_date": today
+    }
+    return fetch_oura_data(url=url, params=params)
 
 """Heart Rate"""
 @app.get("/bpm/")
@@ -156,3 +163,69 @@ def get_bpm():
     print(params)
     return fetch_oura_data(url=url, params=params)
 """Sleep Time"""
+
+
+"""Stress"""
+@app.get("/stress/")
+def get_stress(start_date: str, end_date: str):
+    url = "https://api.ouraring.com/v2/usercollection/daily_stress"
+    params = {
+        "start_date": start_date,
+        "end_date": end_date
+    }
+    return fetch_oura_data(url=url, params=params)
+
+@app.get("/stress/latest")
+def get_latest_stress():
+    today = date.today()
+    url = "https://api.ouraring.com/v2/usercollection/daily_stress"
+    params = {
+        "start_date": today,
+        "end_date": today
+    }
+    return fetch_oura_data(url=url, params=params)
+
+@app.get("/stress/summary")
+def get_stress_summary():
+    yesterday = date.today() - timedelta(days=1)
+    week_from_td = yesterday - timedelta(days=6)
+    url = "https://api.ouraring.com/v2/usercollection/daily_stress"
+    params = {
+        "start_date": week_from_td,
+        "end_date": yesterday
+    }
+
+    data = fetch_oura_data(url=url, params=params)
+    if data.get("data") and len(data.get("data")) > 0:
+
+        recovery_high = 0
+        stress_high = 0
+        day_summary = {
+            "stressful": 0,
+            "restored": 0,
+            "normal": 0
+        }
+        length = 0
+
+        for scores in data["data"]:
+            if scores["day_summary"] is None:
+                continue
+            recovery_high += scores["recovery_high"]
+            stress_high += scores["stress_high"]
+            day_summary.setdefault(scores["day_summary"], 0)
+            day_summary[scores["day_summary"]] += 1
+            length += 1
+
+        avg_recovery = recovery_high / length
+        avg_stress = stress_high / length
+
+
+    return {
+        "dates": {
+            "start_date": week_from_td,
+            "end_date": yesterday
+        },
+        "avg_recovery": round(avg_recovery / 3600, 2),
+        "avg_stress": round(avg_stress / 3600, 2),
+        "day_summaries": day_summary
+    }

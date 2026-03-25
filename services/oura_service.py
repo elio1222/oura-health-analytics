@@ -86,7 +86,9 @@ def fetch_oura_data(url: str, params: dict, retries: int = 3):
 
         data = response.json()
 
-        if response.status_code == 200 and len(data["data"]) > 0:
+        if response.status_code == 200 and len(data["data"]) > 0 if data.get("data") else None:
+            return data
+        if response.status_code == 200:
             return data
         if response.status_code == 401:
             refresh_tokens()
