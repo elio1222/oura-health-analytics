@@ -11,7 +11,6 @@ load_dotenv()
 
 app = FastAPI()
 
-
 """Daily Sleep Routes"""
 @app.get("/sleep/")
 async def get_sleep(start_date: str, end_date: str):
@@ -121,3 +120,28 @@ def get_readiness_sleep():
         "end_date": today 
     }
     return fetch_oura_data(url=url, params=params)
+
+"""Daily Activity"""
+@app.get("/activity/")
+def get_activity(start_date: str, end_date: str):
+    url = "https://api.ouraring.com/v2/usercollection/daily_activity"
+    params = {
+        "start_date": start_date,
+        "end_date": end_date
+    }
+    return fetch_oura_data(url=url, params=params)
+
+@app.get("/activity/latest")
+def get_latest_activity():
+    today = date.today()
+    url = "https://api.ouraring.com/v2/usercollection/daily_activity"
+    params = {
+        "start_date": today,
+        "end_date": today
+    }
+    return fetch_oura_data(url=url, params=params)
+
+"""Personal Info"""
+
+"""Heart Rate"""
+"""Sleep Time"""
