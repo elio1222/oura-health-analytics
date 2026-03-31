@@ -1,5 +1,6 @@
 from openai import OpenAI
 from pydantic import BaseModel
+import json
 
 client = OpenAI()
 
@@ -46,14 +47,14 @@ SYSTEM_PROMPT = """
     - Focus on providing practical advice the user can understand.
     """
 
-class Insight:
+class Insight(BaseModel):
     summary: str
     sleep_insights: str
     readiness_insights: str
     stress_insights: str
     recommendations: str
 
-def analyze_oura_analytics(user_data: str) -> dict:
+def analyze_oura_analytics(user_data: dict) -> dict:
     response = client.responses.parse(
         model="gpt-4o-mini",
         input=[
@@ -63,8 +64,9 @@ def analyze_oura_analytics(user_data: str) -> dict:
             },
             {
                 "role": "user",
-                "content": user_data
+                "content": f"Here is the user's Oura data:\n{json.dumps(user_data, indent=2)}"
             }
+
         ],
         text_format=Insight
     )

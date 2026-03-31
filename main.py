@@ -351,5 +351,5 @@ def get_health_assistant_insight():
         "stress_data": stress_data
     }
 
-    return sleep_readiness_stress_data
+    return analyze_oura_analytics(user_data=sleep_readiness_stress_data)
 
