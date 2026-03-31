@@ -24,7 +24,7 @@ def index():
     """
 
 
-"""Daily Sleep Routes"""
+"""Daily Sleep"""
 @app.get("/sleep/")
 async def get_sleep(start_date: str, end_date: str):
     """Get sleep data from specified start and end dates
@@ -79,31 +79,8 @@ def get_sleep_summary():
 
     return json_data
 
-"""Sleep Routes"""
-@app.get("/sleep/routes")
-def get_sleep_routes(start_date: str, end_date: str):
-    url = "https://api.ouraring.com/v2/usercollection/sleep"
-    params = { 
-        "start_date": start_date, 
-        "end_date": end_date 
-    }
-    return fetch_oura_data(url=url, params=params)
 
-@app.get("/sleep/routes/latest")
-def get_latest_sleep_routes():
-    today = date.today()
-    yesterday = today - timedelta(days=1)
-    url = "https://api.ouraring.com/v2/usercollection/sleep"
-
-    params = {
-    "start_date": yesterday,
-    "end_date": today
-    }
-
-    return fetch_oura_data(url=url, params=params)
-
-
-"""Readiness Routes"""
+"""Daily Readiness"""
 @app.get("/readiness/")
 async def get_readiness(start_date: str, end_date: str):
     """Get readiness data from specified start and end dates
@@ -152,36 +129,7 @@ def get_latest_activity():
     }
     return fetch_oura_data(url=url, params=params)
 
-"""Personal Info"""
-@app.get("/info/")
-def get_personal_info():
-    today = date.today()
-    url = "https://api.ouraring.com/v2/usercollection/personal_info"
-    params = {
-        "start_date": today,
-        "end_date": today
-    }
-    return fetch_oura_data(url=url, params=params)
-
-"""Heart Rate"""
-@app.get("/bpm/")
-def get_bpm():
-    now = datetime.now().astimezone()
-    earlier = now - timedelta(minutes=60)
-    now = now.replace(microsecond=0).isoformat()
-    earlier = earlier.replace(microsecond=0).isoformat()
-    url = "https://api.ouraring.com/v2/usercollection/heartrate"
-
-    params = {
-        "start_datetime": earlier,
-        "end_datetime": now
-    }
-    print(params)
-    return fetch_oura_data(url=url, params=params)
-"""Sleep Time"""
-
-
-"""Stress"""
+"""Daily Stress"""
 @app.get("/stress/")
 def get_stress(start_date: str, end_date: str):
     url = "https://api.ouraring.com/v2/usercollection/daily_stress"
@@ -245,3 +193,53 @@ def get_stress_summary():
         "avg_stress": round(avg_stress / 3600, 2),
         "day_summaries": day_summary
     }
+
+"""Personal Info"""
+@app.get("/user/")
+def get_personal_info():
+    today = date.today()
+    url = "https://api.ouraring.com/v2/usercollection/personal_info"
+    params = {
+        "start_date": today,
+        "end_date": today
+    }
+    return fetch_oura_data(url=url, params=params)
+
+"""Heart Rate"""
+@app.get("/heart-rate/latest")
+def get_bpm():
+    now = datetime.now().astimezone()
+    earlier = now - timedelta(minutes=60)
+    now = now.replace(microsecond=0).isoformat()
+    earlier = earlier.replace(microsecond=0).isoformat()
+    url = "https://api.ouraring.com/v2/usercollection/heartrate"
+
+    params = {
+        "start_datetime": earlier,
+        "end_datetime": now
+    }
+    print(params)
+    return fetch_oura_data(url=url, params=params)
+
+"""Sleep Periods (Routes in Oura API Docs)"""
+@app.get("/periods/sleep/")
+def get_sleep_routes(start_date: str, end_date: str):
+    url = "https://api.ouraring.com/v2/usercollection/sleep"
+    params = { 
+        "start_date": start_date, 
+        "end_date": end_date 
+    }
+    return fetch_oura_data(url=url, params=params)
+
+@app.get("/periods/sleep/latest")
+def get_latest_sleep_routes():
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    url = "https://api.ouraring.com/v2/usercollection/sleep"
+
+    params = {
+    "start_date": yesterday,
+    "end_date": today
+    }
+
+    return fetch_oura_data(url=url, params=params)
