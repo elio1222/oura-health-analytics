@@ -45,7 +45,7 @@ def get_tokens(code: str):
 
     write_tokens(access_token, refresh_token)
 
-def refresh_tokens():
+def refresh_tokens() -> bool:
     try:
         token_url = "https://api.ouraring.com/oauth/token"
         token_data = {
@@ -75,7 +75,7 @@ def shift_date(date: object):
     return date - timedelta(days=1)
 
     
-def fetch_oura_data(url: str, params: dict, retries: int = 3):
+def fetch_oura_data(url: str, params: dict, retries: int = 3) -> dict:
     headers = {
         "Authorization": f"Bearer {os.getenv('ACCESS_TOKEN')}"
     }

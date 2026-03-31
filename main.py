@@ -9,6 +9,50 @@ load_dotenv()
 
 app = FastAPI()
 
+# functions / tools to use
+def param_builder(start_date: date, end_date: date) -> dict:
+    return {
+        "start_date": start_date,
+        "end_date": end_date
+    }
+
+def calculate_readiness_summary(data: dict, params: dict) -> dict:
+
+    scores = [d["score"] for d in data["data"]]
+    activity_balance = [d["contributors"]["activity_balance"] for d in data["data"] if d != None]
+    body_temperature = [d["contributors"]["body_temperature"] for d in data["data"]]
+    hrv_balance = [d["contributors"]["hrv_balance"] for d in data["data"]]
+    previous_day_activity = [d["contributors"]["previous_day_activity"] for d in data["data"] if d["contributors"]["previous_day_activity"] != None]
+    previous_night = [d["contributors"]["previous_night"] for d in data["data"]]
+    recovery_index = [d["contributors"]["recovery_index"] for d in data["data"]]
+    resting_heart_rate = [d["contributors"]["resting_heart_rate"] for d in data["data"]]
+    sleep_balance = [d["contributors"]["sleep_balance"] for d in data["data"]]
+    sleep_regularity = [d["contributors"]["sleep_regularity"] for d in data["data"]]
+
+    # unpacking parameter
+    week_from_td, today = params.values()
+
+    readiness_stats = {
+        "dates": {
+            "start_date": week_from_td,
+            "end_date": today
+        },
+        "avg_scores": {
+            "score": round(sum(scores) / len(scores), 2),
+            "activity_balance": round(sum(activity_balance) / len(activity_balance), 2),
+            "body_temperature": round(sum(body_temperature) / len(body_temperature), 2),
+            "hrv_balance": round(sum(hrv_balance) / len(hrv_balance), 2),
+            "previous_day_activity": round(sum(previous_day_activity) / len(previous_day_activity), 2),
+            "previous_night": round(sum(previous_night) / len(previous_night), 2),
+            "recovery_index": round(sum(recovery_index) / len(recovery_index), 2),
+            "resting_heart_rate": round(sum(resting_heart_rate) / len(resting_heart_rate), 2),
+            "sleep_balance": round(sum(sleep_balance) / len(sleep_balance), 2),
+            "sleep_regularity": round(sum(sleep_regularity) / len(sleep_regularity), 2)
+        }
+    }
+
+    return readiness_stats
+
 
 @app.get("/", response_class=HTMLResponse)
 def index():
@@ -98,7 +142,7 @@ async def get_readiness(start_date: str, end_date: str):
     return fetch_oura_data(url=url, params=params)
 
 @app.get("/readiness/latest")
-def get_readiness_sleep():
+def get_latest_readiness():
     """Get latest readiness data(max retries 3)"""
 
     today = date.today()
@@ -108,6 +152,50 @@ def get_readiness_sleep():
         "end_date": today 
     }
     return fetch_oura_data(url=url, params=params)
+
+@app.get("/readiness/summary")
+def get_readiness_summary():
+    today = date.today()
+    week_from_td = today - timedelta(days=7)
+    url = "https://api.ouraring.com/v2/usercollection/daily_readiness"
+    params = {
+        "start_date": week_from_td,
+        "end_date": today
+    }
+    data = fetch_oura_data(url=url, params=params)
+    
+
+    scores = [d["score"] for d in data["data"]]
+    activity_balance = [d["contributors"]["activity_balance"] for d in data["data"] if d != None]
+    body_temperature = [d["contributors"]["body_temperature"] for d in data["data"]]
+    hrv_balance = [d["contributors"]["hrv_balance"] for d in data["data"]]
+    previous_day_activity = [d["contributors"]["previous_day_activity"] for d in data["data"] if d["contributors"]["previous_day_activity"] != None]
+    previous_night = [d["contributors"]["previous_night"] for d in data["data"]]
+    recovery_index = [d["contributors"]["recovery_index"] for d in data["data"]]
+    resting_heart_rate = [d["contributors"]["resting_heart_rate"] for d in data["data"]]
+    sleep_balance = [d["contributors"]["sleep_balance"] for d in data["data"]]
+    sleep_regularity = [d["contributors"]["sleep_regularity"] for d in data["data"]]
+
+    readiness_stats = {
+        "dates": {
+            "start_date": week_from_td,
+            "end_date": today
+        },
+        "avg_scores": {
+            "score": round(sum(scores) / len(scores), 2),
+            "activity_balance": round(sum(activity_balance) / len(activity_balance), 2),
+            "body_temperature": round(sum(body_temperature) / len(body_temperature), 2),
+            "hrv_balance": round(sum(hrv_balance) / len(hrv_balance), 2),
+            "previous_day_activity": round(sum(previous_day_activity) / len(previous_day_activity), 2),
+            "previous_night": round(sum(previous_night) / len(previous_night), 2),
+            "recovery_index": round(sum(recovery_index) / len(recovery_index), 2),
+            "resting_heart_rate": round(sum(resting_heart_rate) / len(resting_heart_rate), 2),
+            "sleep_balance": round(sum(sleep_balance) / len(sleep_balance), 2),
+            "sleep_regularity": round(sum(sleep_regularity) / len(sleep_regularity), 2)
+        }
+    }
+
+    return readiness_stats
 
 """Daily Activity"""
 @app.get("/activity/")
@@ -243,3 +331,25 @@ def get_latest_sleep_routes():
     }
 
     return fetch_oura_data(url=url, params=params)
+
+
+from services.ai_assistant import analyze_oura_analytics
+
+@app.get("/health-assistant/insight")
+def get_health_assistant_insight():
+    params = param_builder(start_date=date.today() - timedelta(days=6), end_date=date.today())
+
+    sleep_data = fetch_oura_data(url="https://api.ouraring.com/v2/usercollection/daily_sleep", params=params)
+
+    readiness_data = fetch_oura_data(url="https://api.ouraring.com/v2/usercollection/daily_readiness", params=params)
+
+    stress_data = fetch_oura_data(url="https://api.ouraring.com/v2/usercollection/daily_stress", params=params)
+
+    sleep_readiness_stress_data = {
+        "sleep_data": sleep_data,
+        "readiness_data": readiness_data,
+        "stress_data": stress_data
+    }
+
+    return sleep_readiness_stress_data
+
