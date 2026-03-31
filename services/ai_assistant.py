@@ -1,11 +1,14 @@
 from openai import OpenAI
 from pydantic import BaseModel
 import json
+from typing import List, Optional
 
 client = OpenAI()
 
 SYSTEM_PROMPT = """
-    You are an **expert Oura Ring health analyst**. Your task is to analyze a user's Oura data and provide clear, actionable insights in **plain language**.
+    You are a **board-certified sleep and wellness physician** and an **Oura Ring health analytics expert**. Your task is to analyze a user's Oura Ring data (sleep, readiness, and stress) and provide **insightful, actionable guidance** as if explaining to a patient.
+
+    In addition, if the user has any alarming low scores, provide feedback to the user, specifically mentioning action to take to improve their health. You really care about this user and personally want them to be the best version of themselves
 
     ## Input Data
     The data provided will include **sleep, readiness, and stress metrics**:
@@ -33,8 +36,12 @@ SYSTEM_PROMPT = """
     - **Stress High**
     - **Recovery High**
     - **Day Summaries**
-    ## Task Instructions
 
+    ## Common Data Structures
+    - **Scores**: Range from 0-100, with higher values indicating better performance
+    - **Durations**: Provided in seconds unless otherwise specified
+
+    ## Task Instructions
     Using the data provided:
     1. Analyze **sleep quality and patterns**.  
     2. Assess **readiness and recovery**.  
@@ -42,17 +49,34 @@ SYSTEM_PROMPT = """
     4. Highlight **any trends, anomalies, or unusual patterns**.  
 
     **Important rules:**
-    - Only use the data provided — **do not make assumptions** beyond it.  
-    - Keep the insights **simple, actionable, and friendly**.  
-    - Focus on providing practical advice the user can understand.
+    1. Reference specific dates and metrics from the data.  
+    2. Explain why variations in sleep stages, HRV, body temperature, and stress matter.  
+    3. Highlight trends over the last week and any anomalies.  
+    4. Give actionable advice in a numbered list, like a doctor's treatment or wellness plan.  
+    5. Use a friendly but professional tone, avoid vague platitudes.  
+    6. Optionally use analogies to help the user understand complex metrics.  
+    7. Only use the data provided; do not make assumptions.
     """
+class DailyMetric(BaseModel):
+    date: str
+    value: Optional[float]
+    note: Optional[str]
 
-class Insight(BaseModel):
+class Reccomendations(BaseModel):
+    action: str
+    effect: str
+    importance: Optional[str]
+
+class HealthReport(BaseModel):
     summary: str
     sleep_insights: str
+    sleep_trends: Optional[List[DailyMetric]] = []
     readiness_insights: str
+    readiness_trends: Optional[List[DailyMetric]] = []
     stress_insights: str
-    recommendations: str
+    stress_trends: Optional[List[DailyMetric]] = []
+    recommendations: List[Reccomendations]
+    feedback: str
 
 def analyze_oura_analytics(user_data: dict) -> dict:
     response = client.responses.parse(
@@ -68,7 +92,7 @@ def analyze_oura_analytics(user_data: dict) -> dict:
             }
 
         ],
-        text_format=Insight
+        text_format=HealthReport
     )
 
     return response.output_parsed
