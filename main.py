@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
 import os
 from datetime import date, timedelta, timezone, datetime
@@ -7,6 +8,21 @@ from services.oura_service import fetch_oura_data
 load_dotenv()
 
 app = FastAPI()
+
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    return """
+    <html>
+        <head>
+            <title>Oura Analytics</title>
+        </head>
+        <body>
+            <h1>Elio Rocha's Oura Health Analytics</h1>
+        </body>
+    </html>
+    """
+
 
 """Daily Sleep Routes"""
 @app.get("/sleep/")
