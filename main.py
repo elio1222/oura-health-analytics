@@ -62,7 +62,7 @@ def index():
             <title>Oura Analytics</title>
         </head>
         <body>
-            <h1>Elio Rocha's Oura Health Analytics</h1>
+            <h1>Elio Rocha's Oura Health Analytics REST API</h1>
         </body>
     </html>
     """
@@ -78,24 +78,17 @@ async def get_sleep(start_date: str, end_date: str):
     """
 
     url = "https://api.ouraring.com/v2/usercollection/daily_sleep" 
-    params={ 
-        "start_date": start_date, 
-        "end_date": end_date 
-    }
 
-    return fetch_oura_data(url=url, params=params)
+    return fetch_oura_data(url=url, params=param_builder(start_date=start_date, end_date=end_date))
 
 @app.get("/sleep/latest")
 def get_latest_sleep():
     """Get latest sleep data(max retries 3)"""
 
-    today = date.today()
+    today = datetime.now(timezone.utc).date()
     url = "https://api.ouraring.com/v2/usercollection/daily_sleep"
-    params = {
-        "start_date": today,
-        "end_date": today
-    }
-    return fetch_oura_data(url=url, params=params)
+
+    return fetch_oura_data(url=url, params=param_builder(start_date=today, end_date=today))
 
 @app.get("/sleep/summary")
 def get_sleep_summary():
@@ -105,11 +98,8 @@ def get_sleep_summary():
     start_date = end_date - timedelta(days=7)
 
     url = "https://api.ouraring.com/v2/usercollection/daily_sleep"
-    params = {
-        "start_date": start_date,
-        "end_date": end_date
-    }
-    data = fetch_oura_data(url=url, params=params)
+
+    data = fetch_oura_data(url=url, params=param_builder(start_date=start_date, end_date=end_date))
     
     score = 0
     for d in data["data"]:
@@ -134,12 +124,8 @@ async def get_readiness(start_date: str, end_date: str):
     """
 
     url = "https://api.ouraring.com/v2/usercollection/daily_readiness" 
-    params={ 
-        "start_date": start_date, 
-        "end_date": end_date 
-    }
 
-    return fetch_oura_data(url=url, params=params)
+    return fetch_oura_data(url=url, params=param_builder(start_date=start_date, end_date=end_date))
 
 @app.get("/readiness/latest")
 def get_latest_readiness():
@@ -147,53 +133,17 @@ def get_latest_readiness():
 
     today = date.today()
     url = "https://api.ouraring.com/v2/usercollection/daily_readiness"
-    params = { 
-        "start_date": today, 
-        "end_date": today 
-    }
-    return fetch_oura_data(url=url, params=params)
+
+    return fetch_oura_data(url=url, params=param_builder(start_date=today, end_date=today))
 
 @app.get("/readiness/summary")
 def get_readiness_summary():
     today = date.today()
     week_from_td = today - timedelta(days=7)
     url = "https://api.ouraring.com/v2/usercollection/daily_readiness"
-    params = {
-        "start_date": week_from_td,
-        "end_date": today
-    }
-    data = fetch_oura_data(url=url, params=params)
-    
 
-    scores = [d["score"] for d in data["data"]]
-    activity_balance = [d["contributors"]["activity_balance"] for d in data["data"] if d != None]
-    body_temperature = [d["contributors"]["body_temperature"] for d in data["data"]]
-    hrv_balance = [d["contributors"]["hrv_balance"] for d in data["data"]]
-    previous_day_activity = [d["contributors"]["previous_day_activity"] for d in data["data"] if d["contributors"]["previous_day_activity"] != None]
-    previous_night = [d["contributors"]["previous_night"] for d in data["data"]]
-    recovery_index = [d["contributors"]["recovery_index"] for d in data["data"]]
-    resting_heart_rate = [d["contributors"]["resting_heart_rate"] for d in data["data"]]
-    sleep_balance = [d["contributors"]["sleep_balance"] for d in data["data"]]
-    sleep_regularity = [d["contributors"]["sleep_regularity"] for d in data["data"]]
-
-    readiness_stats = {
-        "dates": {
-            "start_date": week_from_td,
-            "end_date": today
-        },
-        "avg_scores": {
-            "score": round(sum(scores) / len(scores), 2),
-            "activity_balance": round(sum(activity_balance) / len(activity_balance), 2),
-            "body_temperature": round(sum(body_temperature) / len(body_temperature), 2),
-            "hrv_balance": round(sum(hrv_balance) / len(hrv_balance), 2),
-            "previous_day_activity": round(sum(previous_day_activity) / len(previous_day_activity), 2),
-            "previous_night": round(sum(previous_night) / len(previous_night), 2),
-            "recovery_index": round(sum(recovery_index) / len(recovery_index), 2),
-            "resting_heart_rate": round(sum(resting_heart_rate) / len(resting_heart_rate), 2),
-            "sleep_balance": round(sum(sleep_balance) / len(sleep_balance), 2),
-            "sleep_regularity": round(sum(sleep_regularity) / len(sleep_regularity), 2)
-        }
-    }
+    data = fetch_oura_data(url=url, params=param_builder(start_date=week_from_td, end_date=today))
+    readiness_stats = calculate_readiness_summary(data=data, params=param_builder(start_date=week_from_td, end_date=today))
 
     return readiness_stats
 
@@ -201,53 +151,37 @@ def get_readiness_summary():
 @app.get("/activity/")
 def get_activity(start_date: str, end_date: str):
     url = "https://api.ouraring.com/v2/usercollection/daily_activity"
-    params = {
-        "start_date": start_date,
-        "end_date": end_date
-    }
-    return fetch_oura_data(url=url, params=params)
+
+    return fetch_oura_data(url=url, params=param_builder(start_date=start_date, end_date=end_date))
 
 @app.get("/activity/latest")
 def get_latest_activity():
     today = date.today()
     url = "https://api.ouraring.com/v2/usercollection/daily_activity"
-    params = {
-        "start_date": today,
-        "end_date": today
-    }
-    return fetch_oura_data(url=url, params=params)
+
+    return fetch_oura_data(url=url, params=param_builder(start_date=today, end_date=today))
 
 """Daily Stress"""
 @app.get("/stress/")
 def get_stress(start_date: str, end_date: str):
     url = "https://api.ouraring.com/v2/usercollection/daily_stress"
-    params = {
-        "start_date": start_date,
-        "end_date": end_date
-    }
-    return fetch_oura_data(url=url, params=params)
+
+    return fetch_oura_data(url=url, params=param_builder(start_date=start_date, end_date=end_date))
 
 @app.get("/stress/latest")
 def get_latest_stress():
     today = date.today()
     url = "https://api.ouraring.com/v2/usercollection/daily_stress"
-    params = {
-        "start_date": today,
-        "end_date": today
-    }
-    return fetch_oura_data(url=url, params=params)
+
+    return fetch_oura_data(url=url, params=param_builder(start_date=today, end_date=today))
 
 @app.get("/stress/summary")
 def get_stress_summary():
     yesterday = date.today() - timedelta(days=1)
     week_from_td = yesterday - timedelta(days=6)
     url = "https://api.ouraring.com/v2/usercollection/daily_stress"
-    params = {
-        "start_date": week_from_td,
-        "end_date": yesterday
-    }
 
-    data = fetch_oura_data(url=url, params=params)
+    data = fetch_oura_data(url=url, params=param_builder(start_date=week_from_td, end_date=yesterday))
     if data.get("data") and len(data.get("data")) > 0:
 
         recovery_high = 0
@@ -287,11 +221,8 @@ def get_stress_summary():
 def get_personal_info():
     today = date.today()
     url = "https://api.ouraring.com/v2/usercollection/personal_info"
-    params = {
-        "start_date": today,
-        "end_date": today
-    }
-    return fetch_oura_data(url=url, params=params)
+
+    return fetch_oura_data(url=url, params=param_builder(start_date=today, end_date=today))
 
 """Heart Rate"""
 @app.get("/heart-rate/latest")
@@ -313,11 +244,8 @@ def get_bpm():
 @app.get("/periods/sleep/")
 def get_sleep_routes(start_date: str, end_date: str):
     url = "https://api.ouraring.com/v2/usercollection/sleep"
-    params = { 
-        "start_date": start_date, 
-        "end_date": end_date 
-    }
-    return fetch_oura_data(url=url, params=params)
+
+    return fetch_oura_data(url=url, params=param_builder(start_date=start_date, end_date=end_date))
 
 @app.get("/periods/sleep/latest")
 def get_latest_sleep_routes():
@@ -325,12 +253,7 @@ def get_latest_sleep_routes():
     yesterday = today - timedelta(days=1)
     url = "https://api.ouraring.com/v2/usercollection/sleep"
 
-    params = {
-    "start_date": yesterday,
-    "end_date": today
-    }
-
-    return fetch_oura_data(url=url, params=params)
+    return fetch_oura_data(url=url, params=param_builder(start_date=yesterday, end_date=today))
 
 
 from services.ai_assistant import analyze_oura_analytics
