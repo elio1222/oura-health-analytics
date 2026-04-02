@@ -3,12 +3,23 @@ from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
 import os
 from datetime import date, timedelta, timezone, datetime
-from services.oura_service import fetch_oura_data
+from services.oura_service import fetch_oura_data, run, get_tokens
 
 load_dotenv()
 
 app = FastAPI()
 
+if not os.getenv("ACCESS_TOKEN") or not os.getenv("REFRESH_TOKEN"):
+    run()
+
+@app.get('/callback')
+def callback(code: str = None):
+    if code:
+        get_tokens(code)
+        return {"message": "Authorization successful. You can close this tab."}
+    else:
+        return {"error": "No code found in URL"}
+    
 # functions / tools to use
 def param_builder(start_date: date, end_date: date) -> dict:
     return {
