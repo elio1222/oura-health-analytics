@@ -267,7 +267,7 @@ def get_latest_sleep_routes():
     return fetch_oura_data(url=url, params=param_builder(start_date=yesterday, end_date=today))
 
 
-from services.ai_assistant import analyze_oura_analytics
+from services.ai_service import analyze_oura_analytics
 
 @app.get("/health-assistant/insight")
 def get_health_assistant_insight():

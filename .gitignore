@@ -2,3 +2,4 @@
 __pycache__/
 *.pyc
 /hidden
+sleep_etl.log
