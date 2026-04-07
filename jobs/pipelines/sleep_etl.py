@@ -21,8 +21,8 @@ engine = create_engine(os.getenv("DATABASE_URI"))
 class Base(DeclarativeBase):
     pass
 
-class DailySleep(Base):
-    __tablename__ = "daily_sleep"
+class RawDailySleep(Base):
+    __tablename__ = "raw_daily_sleep"
 
     # root fields
     id: Mapped[str] = mapped_column(primary_key=True)
@@ -76,12 +76,12 @@ def main():
                     "total_sleep": contributors.get("total_sleep")
                 }
 
-                new_dailysleep_record = DailySleep(**dailysleep_obj)
+                new_dailysleep_record = RawDailySleep(**dailysleep_obj)
                 session.merge(new_dailysleep_record) # merge checks if the primary key already exists, if it does, it updates it, if not it adds it. better than session.add() which can cause duplicate primary key if ran more than once. 
 
             pass
 
-        start_of_history = date(2026, 4, 1)
+        start_of_history = date(2024, 12, 1)
         current_start = start_of_history
         end_of_history = date.today()
 
@@ -124,10 +124,91 @@ def main():
 
 # transform raw sleep data, remove certain fields, add fields, etc
 
+class DailySleep(Base):
+    __tablename__ = "sleep_data"
+
+    # same fields from raw data
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    day: Mapped[date] = mapped_column(Date)
+    score: Mapped[int] = mapped_column(Integer)
+
+    # contributors (flattened)
+    deep_sleep: Mapped[int] = mapped_column(Integer)
+    efficiency: Mapped[int] = mapped_column(Integer)
+    latency: Mapped[int] = mapped_column(Integer)
+    rem_sleep: Mapped[int] = mapped_column(Integer)
+    restfulness: Mapped[int] = mapped_column(Integer)
+    timing: Mapped[int] = mapped_column(Integer)
+    total_sleep: Mapped[int] = mapped_column(Integer)
+
+    # custom fields
+    performance_score: Mapped[int] = mapped_column(Integer)
+    recovery_score : Mapped[int] = mapped_column(Integer)
+    consistency_score: Mapped[int] = mapped_column(Integer)
+    custom_score: Mapped[int] = mapped_column(Integer)
+
+def fetch_and_transform():
+
+    Session = sessionmaker(bind=engine)
+
+    start_of_history = date(2024, 12, 1)
+    current_start = start_of_history
+    end_of_history = date.today()
+
+    while current_start < end_of_history:
+        current_end = current_start + relativedelta(months=1) - relativedelta(days=1)
+
+        with Session() as session:
+
+            try:
+                data = session.query(RawDailySleep).filter(RawDailySleep.day >= current_start, RawDailySleep.day < current_end).all()
+
+                for d in data:
+                    # formulas
+
+                    performance_score = (0.25 * d.rem_sleep) + (0.20 * d.efficiency) + (0.20 * d.latency) + (0.15 * d.total_sleep) + (0.10 * d.deep_sleep) + (0.10 * d.timing)
+
+                    recovery_score = (0.30 * d.deep_sleep) + (0.25 * d.total_sleep) + (0.15 * d.restfulness) + (0.10 * d.efficiency) + (0.10 * d.rem_sleep) + (0.10 * d.timing)
+
+                    consistency_score = (0.35 * d.timing) + (0.25 * d.latency) + (0.20 * d.efficiency) + (0.10 * d.restfulness) + (0.10 * d.total_sleep)
+
+                    custom_score = (0.25 * d.total_sleep) + (0.20 * d.rem_sleep) + (0.20 * d.efficiency) + (0.15 * d.latency) + (0.1 * d.deep_sleep) + (0.10 * d.timing)
+
+                    sleep_data = {
+
+                        # fields from raw data
+                        "id": d.id,
+                        "day": d.day,
+                        "score": d.score,
+                        "deep_sleep": d.deep_sleep,
+                        "efficiency": d.efficiency,
+                        "latency": d.latency,
+                        "rem_sleep": d.rem_sleep,
+                        "restfulness": d.restfulness,
+                        "timing": d.timing,
+                        "total_sleep": d.total_sleep,
+
+                        # custom fields
+                        "performance_score": round(performance_score),
+                        "recovery_score": round(recovery_score),
+                        "consistency_score": round(consistency_score),
+                        "custom_score": round(custom_score)
+                    }
+
+                    transformed_data = DailySleep(**sleep_data)
+                    session.merge(transformed_data)
+                    session.commit()
+
+            except Exception as e:
+                logging.info(e)
+                logging.info(param_builder(start_date=current_start, end_date=current_end) + " failed")
+
+        current_start += relativedelta(months=1)
+
 # load to postgresql database
 
 if __name__ == "__main__":
     logging.basicConfig(filename="sleep_etl.log", level=logging.INFO)
     logging.info("Starting main")
-    main()
+    fetch_and_transform()
     logging.info("success")
