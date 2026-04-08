@@ -77,3 +77,40 @@ def calculate_sleep_summary():
             "score": worst_day.score
         }
     }
+
+def calculate_readiness_summary(data: dict, params: dict) -> dict:
+
+    scores = [d["score"] for d in data["data"]]
+    activity_balance = [d["contributors"]["activity_balance"] for d in data["data"] if d != None]
+    body_temperature = [d["contributors"]["body_temperature"] for d in data["data"]]
+    hrv_balance = [d["contributors"]["hrv_balance"] for d in data["data"]]
+    previous_day_activity = [d["contributors"]["previous_day_activity"] for d in data["data"] if d["contributors"]["previous_day_activity"] != None]
+    previous_night = [d["contributors"]["previous_night"] for d in data["data"]]
+    recovery_index = [d["contributors"]["recovery_index"] for d in data["data"]]
+    resting_heart_rate = [d["contributors"]["resting_heart_rate"] for d in data["data"]]
+    sleep_balance = [d["contributors"]["sleep_balance"] for d in data["data"]]
+    sleep_regularity = [d["contributors"]["sleep_regularity"] for d in data["data"]]
+
+    # unpacking parameter
+    week_from_td, today = params.values()
+
+    readiness_stats = {
+        "dates": {
+            "start_date": week_from_td,
+            "end_date": today
+        },
+        "avg_scores": {
+            "score": round(sum(scores) / len(scores), 2),
+            "activity_balance": round(sum(activity_balance) / len(activity_balance), 2),
+            "body_temperature": round(sum(body_temperature) / len(body_temperature), 2),
+            "hrv_balance": round(sum(hrv_balance) / len(hrv_balance), 2),
+            "previous_day_activity": round(sum(previous_day_activity) / len(previous_day_activity), 2),
+            "previous_night": round(sum(previous_night) / len(previous_night), 2),
+            "recovery_index": round(sum(recovery_index) / len(recovery_index), 2),
+            "resting_heart_rate": round(sum(resting_heart_rate) / len(resting_heart_rate), 2),
+            "sleep_balance": round(sum(sleep_balance) / len(sleep_balance), 2),
+            "sleep_regularity": round(sum(sleep_regularity) / len(sleep_regularity), 2)
+        }
+    }
+
+    return readiness_stats

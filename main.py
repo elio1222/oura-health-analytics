@@ -5,7 +5,8 @@ import os
 from datetime import date, timedelta, timezone, datetime
 from services.oura_service import fetch_oura_data, run, get_tokens
 import services.db_service as db
-from services.analytics_service import calculate_sleep_summary
+from services.analytics_service import calculate_sleep_summary, calculate_readiness_summary, param_builder
+from services.ai_service import analyze_oura_analytics
 
 load_dotenv()
 
@@ -21,51 +22,6 @@ def callback(code: str = None):
         return {"message": "Authorization successful. You can close this tab."}
     else:
         return {"error": "No code found in URL"}
-    
-# functions / tools to use
-def param_builder(start_date: date, end_date: date) -> dict:
-    return {
-        "start_date": start_date,
-        "end_date": end_date
-    }
-
-def calculate_readiness_summary(data: dict, params: dict) -> dict:
-
-    scores = [d["score"] for d in data["data"]]
-    activity_balance = [d["contributors"]["activity_balance"] for d in data["data"] if d != None]
-    body_temperature = [d["contributors"]["body_temperature"] for d in data["data"]]
-    hrv_balance = [d["contributors"]["hrv_balance"] for d in data["data"]]
-    previous_day_activity = [d["contributors"]["previous_day_activity"] for d in data["data"] if d["contributors"]["previous_day_activity"] != None]
-    previous_night = [d["contributors"]["previous_night"] for d in data["data"]]
-    recovery_index = [d["contributors"]["recovery_index"] for d in data["data"]]
-    resting_heart_rate = [d["contributors"]["resting_heart_rate"] for d in data["data"]]
-    sleep_balance = [d["contributors"]["sleep_balance"] for d in data["data"]]
-    sleep_regularity = [d["contributors"]["sleep_regularity"] for d in data["data"]]
-
-    # unpacking parameter
-    week_from_td, today = params.values()
-
-    readiness_stats = {
-        "dates": {
-            "start_date": week_from_td,
-            "end_date": today
-        },
-        "avg_scores": {
-            "score": round(sum(scores) / len(scores), 2),
-            "activity_balance": round(sum(activity_balance) / len(activity_balance), 2),
-            "body_temperature": round(sum(body_temperature) / len(body_temperature), 2),
-            "hrv_balance": round(sum(hrv_balance) / len(hrv_balance), 2),
-            "previous_day_activity": round(sum(previous_day_activity) / len(previous_day_activity), 2),
-            "previous_night": round(sum(previous_night) / len(previous_night), 2),
-            "recovery_index": round(sum(recovery_index) / len(recovery_index), 2),
-            "resting_heart_rate": round(sum(resting_heart_rate) / len(resting_heart_rate), 2),
-            "sleep_balance": round(sum(sleep_balance) / len(sleep_balance), 2),
-            "sleep_regularity": round(sum(sleep_regularity) / len(sleep_regularity), 2)
-        }
-    }
-
-    return readiness_stats
-
 
 @app.get("/", response_class=HTMLResponse)
 def index():
@@ -84,15 +40,12 @@ def index():
 @app.get("/sleep/")
 async def get_sleep(start_date: str, end_date: str):
     """Get sleep data from specified start and end dates"""
-
     return db.query_sleep_data(params=param_builder(start_date=start_date, end_date=end_date))
 
 @app.get("/sleep/latest")
 def get_latest_sleep():
     """Get latest sleep data(max retries 3)"""
-
     today = datetime.now(timezone.utc).date()
-
     return db.query_sleep_data(params=param_builder(start_date=today, end_date=today))
 
 @app.get("/sleep/summary")
@@ -103,11 +56,7 @@ def get_sleep_summary():
 """Daily Readiness"""
 @app.get("/readiness/")
 async def get_readiness(start_date: str, end_date: str):
-    """Get readiness data from specified start and end dates
-    Args:
-        start_date (str): beginning date
-        end_date (str): end date
-    """
+    """Get readiness data from specified start and end dates"""
 
     url = "https://api.ouraring.com/v2/usercollection/daily_readiness" 
 
@@ -240,9 +189,6 @@ def get_latest_sleep_routes():
     url = "https://api.ouraring.com/v2/usercollection/sleep"
 
     return fetch_oura_data(url=url, params=param_builder(start_date=yesterday, end_date=today))
-
-
-from services.ai_service import analyze_oura_analytics
 
 @app.get("/health-assistant/insight")
 def get_health_assistant_insight():

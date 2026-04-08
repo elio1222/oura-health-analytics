@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from typing import List, Dict
 from datetime import date, datetime
 import os
-from services.oura_service import fetch_oura_data 
+from services.oura_service import fetch_oura_data, param_builder
 from dateutil.relativedelta import relativedelta
 
 load_dotenv()
@@ -57,12 +57,6 @@ class DailySleep(Base):
 
 # creates tables in sql from python objects 
 Base.metadata.create_all(engine)
-
-def param_builder(start_date: date, end_date: date) -> dict:
-    return {
-        "start_date": start_date,
-        "end_date": end_date
-    }
 
 def fetch_and_extract():
     """Extract Raw Data From Oura API requests and save it into database"""
