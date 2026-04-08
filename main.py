@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 import os
 from datetime import date, timedelta, timezone, datetime
 from services.oura_service import fetch_oura_data, run, get_tokens
+import services.db_service as db
+from services.analytics_service import calculate_sleep_summary
 
 load_dotenv()
 
@@ -78,57 +80,25 @@ def index():
     </html>
     """
 
-
 """Daily Sleep"""
 @app.get("/sleep/")
 async def get_sleep(start_date: str, end_date: str):
-    """Get sleep data from specified start and end dates
-    Args:
-        start_date (str): beginning date
-        end_date (str): end date
-    """
+    """Get sleep data from specified start and end dates"""
 
-    url = "https://api.ouraring.com/v2/usercollection/daily_sleep" 
-
-    return fetch_oura_data(url=url, params=param_builder(start_date=start_date, end_date=end_date))
+    return db.query_sleep_data(params=param_builder(start_date=start_date, end_date=end_date))
 
 @app.get("/sleep/latest")
 def get_latest_sleep():
     """Get latest sleep data(max retries 3)"""
 
     today = datetime.now(timezone.utc).date()
-    url = "https://api.ouraring.com/v2/usercollection/daily_sleep"
 
-    return fetch_oura_data(url=url, params=param_builder(start_date=today, end_date=today))
+    return db.query_sleep_data(params=param_builder(start_date=today, end_date=today))
 
 @app.get("/sleep/summary")
 def get_sleep_summary():
     """Get sleep summary data from the past 7 days, returns avg score"""
-
-    end_date = date.today()
-    start_date = end_date - timedelta(days=7)
-
-    url = "https://api.ouraring.com/v2/usercollection/daily_sleep"
-
-    data = fetch_oura_data(url=url, params=param_builder(start_date=start_date, end_date=end_date))
-    
-    score = 0
-    for d in data["data"]:
-        score += d["score"]
-    avg_score = score / len(data["data"])
-
-    json_data = {
-        "avg_score": avg_score,
-        "days_tracked": len(data["data"])
-    }
-
-    return json_data
-
-from services.db_service import query_sleep_data
-@app.get("/sleep/db/")
-async def get_sleep_from_db(start_date: str, end_date: str):
-    data = query_sleep_data(params=param_builder(start_date=start_date, end_date=end_date))
-    return data
+    return calculate_sleep_summary()
 
 """Daily Readiness"""
 @app.get("/readiness/")

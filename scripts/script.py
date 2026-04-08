@@ -1,9 +1,9 @@
 import requests
+from jobs.pipelines.sleep_etl import run_dailysleep_pipeline
 
 
 def main():
-    resposne = requests.get(url="http://0.0.0.0:8000/stress/summary/")
-    print(resposne.json())
+    run_dailysleep_pipeline()
 
 if __name__ == "__main__":
     main()

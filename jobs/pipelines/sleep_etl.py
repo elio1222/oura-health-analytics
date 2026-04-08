@@ -176,7 +176,7 @@ def transform_and_load():
 
 
 # etl pipeline (run dailly pipeline)
-def run_daily_pipeline():
+def run_dailysleep_pipeline():
     try:
         fetch_and_extract()
     except Exception as e:
@@ -187,4 +187,4 @@ def run_daily_pipeline():
         return
 
 if __name__ == "__main__":
-    run_daily_pipeline()
+    run_dailysleep_pipeline()

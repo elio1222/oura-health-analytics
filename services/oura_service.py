@@ -4,6 +4,7 @@ import webbrowser
 import os
 from urllib.parse import urlencode
 from datetime import timedelta
+from datetime import date
 
 
 load_dotenv()
@@ -74,7 +75,12 @@ def shift_date(date: object):
     """Shifting date paramter by one day back"""
     return date - timedelta(days=1)
 
-    
+def param_builder(start_date: date, end_date: date) -> dict:
+    return {
+        "start_date": start_date,
+        "end_date": end_date
+    }
+
 def fetch_oura_data(url: str, params: dict, retries: int = 3) -> dict:
     headers = {
         "Authorization": f"Bearer {os.getenv('ACCESS_TOKEN')}"
