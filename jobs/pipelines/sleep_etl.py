@@ -9,7 +9,7 @@ from dateutil.relativedelta import relativedelta
 
 load_dotenv()
 
-engine = create_engine(os.getenv("DATABASE_URI"))
+engine = create_engine(os.getenv("DOCKER_DATABASE_URI"))
 
 class Base(DeclarativeBase):
     pass

@@ -124,6 +124,11 @@ def get_sleep_summary():
 
     return json_data
 
+from services.db_service import query_sleep_data
+@app.get("/sleep/db/")
+async def get_sleep_from_db(start_date: str, end_date: str):
+    data = query_sleep_data(params=param_builder(start_date=start_date, end_date=end_date))
+    return data
 
 """Daily Readiness"""
 @app.get("/readiness/")
