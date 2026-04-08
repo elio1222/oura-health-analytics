@@ -78,18 +78,21 @@ def calculate_sleep_summary():
         }
     }
 
-def calculate_readiness_summary(data: dict, params: dict) -> dict:
+def calculate_readiness_summary(params: dict) -> dict:
 
-    scores = [d["score"] for d in data["data"]]
-    activity_balance = [d["contributors"]["activity_balance"] for d in data["data"] if d != None]
-    body_temperature = [d["contributors"]["body_temperature"] for d in data["data"]]
-    hrv_balance = [d["contributors"]["hrv_balance"] for d in data["data"]]
-    previous_day_activity = [d["contributors"]["previous_day_activity"] for d in data["data"] if d["contributors"]["previous_day_activity"] != None]
-    previous_night = [d["contributors"]["previous_night"] for d in data["data"]]
-    recovery_index = [d["contributors"]["recovery_index"] for d in data["data"]]
-    resting_heart_rate = [d["contributors"]["resting_heart_rate"] for d in data["data"]]
-    sleep_balance = [d["contributors"]["sleep_balance"] for d in data["data"]]
-    sleep_regularity = [d["contributors"]["sleep_regularity"] for d in data["data"]]
+
+    data = query_from_db(type_of_data="readiness", params=params)
+
+    scores = [d.score for d in data]
+    activity_balance = [d.activity_balance for d in data if d.activity_balance is not None]
+    body_temperature = [d.body_temperature for d in data if d.body_temperature is not None]
+    hrv_balance = [d.hrv_balance for d in data if d.hrv_balance is not None]
+    previous_day_activity = [d.previous_day_activity for d in data if d.previous_day_activity is not None]
+    previous_night = [d.previous_night for d in data if d.previous_night is not None]
+    recovery_index = [d.recovery_index for d in data if d.recovery_index is not None]
+    resting_heart_rate = [d.resting_heart_rate for d in data if d.resting_heart_rate is not None]
+    sleep_balance = [d.sleep_balance for d in data if d.sleep_balance is not None]
+    sleep_regularity = [d.sleep_regularity for d in data if d.sleep_regularity is not None]
 
     # unpacking parameter
     week_from_td, today = params.values()

@@ -3,9 +3,9 @@ from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
 import os
 from datetime import date, timedelta, timezone, datetime
-from services.oura_service import fetch_oura_data, run, get_tokens
-import services.db_service as db
-from services.analytics_service import calculate_sleep_summary, calculate_readiness_summary, param_builder
+from services.oura_service import fetch_oura_data, run, get_tokens, param_builder
+from services.db_service import query_from_db
+from services.analytics_service import calculate_sleep_summary, calculate_readiness_summary
 from services.ai_service import analyze_oura_analytics
 
 load_dotenv()
@@ -40,13 +40,13 @@ def index():
 @app.get("/sleep/")
 async def get_sleep(start_date: str, end_date: str):
     """Get sleep data from specified start and end dates"""
-    return db.query_from_db(type_of_data="sleep", params=param_builder(start_date=start_date, end_date=end_date))
+    return query_from_db(type_of_data="sleep", params=param_builder(start_date=start_date, end_date=end_date))
 
 @app.get("/sleep/latest")
 def get_latest_sleep():
     """Get latest sleep data(max retries 3)"""
     today = datetime.now(timezone.utc).date()
-    return db.query_from_db(type_of_data="sleep", params=param_builder(start_date=today, end_date=today))
+    return query_from_db(type_of_data="sleep", params=param_builder(start_date=today, end_date=today))
 
 @app.get("/sleep/summary")
 def get_sleep_summary():
@@ -57,30 +57,19 @@ def get_sleep_summary():
 @app.get("/readiness/")
 async def get_readiness(start_date: str, end_date: str):
     """Get readiness data from specified start and end dates"""
-
-    url = "https://api.ouraring.com/v2/usercollection/daily_readiness" 
-
-    return fetch_oura_data(url=url, params=param_builder(start_date=start_date, end_date=end_date))
+    return query_from_db(type_of_data="readiness", params=param_builder(start_date=start_date, end_date=end_date))
 
 @app.get("/readiness/latest")
 def get_latest_readiness():
     """Get latest readiness data(max retries 3)"""
-
     today = date.today()
-    url = "https://api.ouraring.com/v2/usercollection/daily_readiness"
-
-    return fetch_oura_data(url=url, params=param_builder(start_date=today, end_date=today))
+    return query_from_db(type_of_data="readiness", params=param_builder(start_date=today, end_date=today))
 
 @app.get("/readiness/summary")
 def get_readiness_summary():
     today = date.today()
     week_from_td = today - timedelta(days=7)
-    url = "https://api.ouraring.com/v2/usercollection/daily_readiness"
-
-    data = fetch_oura_data(url=url, params=param_builder(start_date=week_from_td, end_date=today))
-    readiness_stats = calculate_readiness_summary(data=data, params=param_builder(start_date=week_from_td, end_date=today))
-
-    return readiness_stats
+    return calculate_readiness_summary(params=param_builder(start_date=week_from_td, end_date=today))
 
 """Daily Activity"""
 @app.get("/activity/")
