@@ -1,4 +1,4 @@
-from services.db_service import query_sleep_data
+from services.db_service import query_from_db
 from services.oura_service import param_builder
 from datetime import date, timedelta
 
@@ -9,7 +9,7 @@ def calculate_sleep_summary():
     week_from_td = yesterday - timedelta(days=6)
     params = param_builder(start_date=week_from_td, end_date=yesterday)
 
-    data = query_sleep_data(params=params)
+    data = query_from_db(type_of_data="sleep", params=params)
 
     scores = [d.score for d in data]
     avg_score = round(sum(scores) / len(scores))

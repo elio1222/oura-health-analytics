@@ -40,13 +40,13 @@ def index():
 @app.get("/sleep/")
 async def get_sleep(start_date: str, end_date: str):
     """Get sleep data from specified start and end dates"""
-    return db.query_sleep_data(params=param_builder(start_date=start_date, end_date=end_date))
+    return db.query_from_db(type_of_data="sleep", params=param_builder(start_date=start_date, end_date=end_date))
 
 @app.get("/sleep/latest")
 def get_latest_sleep():
     """Get latest sleep data(max retries 3)"""
     today = datetime.now(timezone.utc).date()
-    return db.query_sleep_data(params=param_builder(start_date=today, end_date=today))
+    return db.query_from_db(type_of_data="sleep", params=param_builder(start_date=today, end_date=today))
 
 @app.get("/sleep/summary")
 def get_sleep_summary():
