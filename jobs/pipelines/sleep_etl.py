@@ -9,7 +9,7 @@ from dateutil.relativedelta import relativedelta
 
 load_dotenv()
 
-engine = create_engine(os.getenv("DOCKER_DATABASE_URI"))
+engine = create_engine(os.getenv("DATABASE_URI"))
 
 class Base(DeclarativeBase):
     pass
@@ -116,57 +116,57 @@ def transform_and_load():
     # end_of_history = date.today()
 
     with Session() as session:
-        current_start = session.query(func.max(RawDailySleep.day)).scalar()
+        current_start = session.query(func.max(DailySleep.day)).scalar()
         end_of_history = date.today()
 
-    while current_start < end_of_history:
-        current_end = current_start + relativedelta(months=1) - relativedelta(days=1)
+        while current_start < end_of_history:
+            current_end = current_start + relativedelta(months=1) - relativedelta(days=1)
 
-        with Session() as session:
+            with Session() as session:
 
-            try:
-                data = session.query(RawDailySleep).filter(RawDailySleep.day >= current_start, RawDailySleep.day <= current_end).all()
+                try:
+                    data = session.query(RawDailySleep).filter(RawDailySleep.day >= current_start, RawDailySleep.day <= current_end).all()
 
-                for d in data:
-                    # formulas
-                    performance_score = (0.25 * d.rem_sleep) + (0.20 * d.efficiency) + (0.20 * d.latency) + (0.15 * d.total_sleep) + (0.10 * d.deep_sleep) + (0.10 * d.timing)
+                    for d in data:
+                        # formulas
+                        performance_score = (0.25 * d.rem_sleep) + (0.20 * d.efficiency) + (0.20 * d.latency) + (0.15 * d.total_sleep) + (0.10 * d.deep_sleep) + (0.10 * d.timing)
 
-                    recovery_score = (0.30 * d.deep_sleep) + (0.25 * d.total_sleep) + (0.15 * d.restfulness) + (0.10 * d.efficiency) + (0.10 * d.rem_sleep) + (0.10 * d.timing)
+                        recovery_score = (0.30 * d.deep_sleep) + (0.25 * d.total_sleep) + (0.15 * d.restfulness) + (0.10 * d.efficiency) + (0.10 * d.rem_sleep) + (0.10 * d.timing)
 
-                    consistency_score = (0.35 * d.timing) + (0.25 * d.latency) + (0.20 * d.efficiency) + (0.10 * d.restfulness) + (0.10 * d.total_sleep)
+                        consistency_score = (0.35 * d.timing) + (0.25 * d.latency) + (0.20 * d.efficiency) + (0.10 * d.restfulness) + (0.10 * d.total_sleep)
 
-                    custom_score = (0.25 * d.total_sleep) + (0.20 * d.rem_sleep) + (0.20 * d.efficiency) + (0.15 * d.latency) + (0.1 * d.deep_sleep) + (0.10 * d.timing)
+                        custom_score = (0.25 * d.total_sleep) + (0.20 * d.rem_sleep) + (0.20 * d.efficiency) + (0.15 * d.latency) + (0.1 * d.deep_sleep) + (0.10 * d.timing)
 
-                    # transformed data obj
-                    sleep_data = {
+                        # transformed data obj
+                        sleep_data = {
 
-                        # fields from raw data
-                        "id": d.id,
-                        "day": d.day,
-                        "score": d.score,
-                        "deep_sleep": d.deep_sleep,
-                        "efficiency": d.efficiency,
-                        "latency": d.latency,
-                        "rem_sleep": d.rem_sleep,
-                        "restfulness": d.restfulness,
-                        "timing": d.timing,
-                        "total_sleep": d.total_sleep,
+                            # fields from raw data
+                            "id": d.id,
+                            "day": d.day,
+                            "score": d.score,
+                            "deep_sleep": d.deep_sleep,
+                            "efficiency": d.efficiency,
+                            "latency": d.latency,
+                            "rem_sleep": d.rem_sleep,
+                            "restfulness": d.restfulness,
+                            "timing": d.timing,
+                            "total_sleep": d.total_sleep,
 
-                        # custom fields
-                        "performance_score": round(performance_score),
-                        "recovery_score": round(recovery_score),
-                        "consistency_score": round(consistency_score),
-                        "custom_score": round(custom_score)
-                    }
+                            # custom fields
+                            "performance_score": round(performance_score),
+                            "recovery_score": round(recovery_score),
+                            "consistency_score": round(consistency_score),
+                            "custom_score": round(custom_score)
+                        }
 
-                    transformed_data = DailySleep(**sleep_data)
-                    session.merge(transformed_data)
-                session.commit()
+                        transformed_data = DailySleep(**sleep_data)
+                        session.merge(transformed_data)
+                    session.commit()
 
-            except Exception as e:
-                print(e)
+                except Exception as e:
+                    print(e)
 
-        current_start += relativedelta(months=1)
+            current_start += relativedelta(months=1)
 
 
 # etl pipeline (run dailly pipeline)
