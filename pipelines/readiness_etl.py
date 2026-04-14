@@ -1,11 +1,11 @@
-from sqlalchemy import create_engine, Date, Integer, DateTime, Float, func
-from sqlalchemy.orm import Mapped, Session, mapped_column, DeclarativeBase, sessionmaker
-from services.oura_service import param_builder
-from services.oura_service import fetch_oura_data
-from datetime import date, datetime
+from sqlalchemy import create_engine, func
+from sqlalchemy.orm import Session, sessionmaker
+from app.services.oura_service import param_builder, fetch_oura_data
+from datetime import date 
 from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
 import os
+from app.models.models import Base, RawDailyReadiness, DailyReadiness
 
 load_dotenv()
 
@@ -20,58 +20,6 @@ def get_database_uri():
 
 
 engine = create_engine(get_database_uri())
-
-class Base(DeclarativeBase):
-    pass
-
-class RawDailyReadiness(Base):
-    __tablename__ = "raw_daily_readiness"
-
-    # root fields
-    id: Mapped[str] = mapped_column(primary_key=True)
-    day: Mapped[date] = mapped_column(Date)
-    score: Mapped[int] = mapped_column(Integer)
-    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    temperature_deviation: Mapped[Float] = mapped_column(Float, nullable=True)
-    temperature_trend_deviation: Mapped[Float] = mapped_column(Float, nullable=True)
-
-    # contributors (flattened)
-    activity_balance: Mapped[int] = mapped_column(Integer, nullable=True)
-    body_temperature: Mapped[int] = mapped_column(Integer, nullable=True)
-    hrv_balance: Mapped[int] = mapped_column(Integer, nullable=True)
-    previous_day_activity: Mapped[int] = mapped_column(Integer, nullable=True)
-    previous_night: Mapped[int] = mapped_column(Integer, nullable=True)
-    recovery_index: Mapped[int] = mapped_column(Integer, nullable=True)
-    resting_heart_rate: Mapped[int] = mapped_column(Integer, nullable=True)
-    sleep_balance: Mapped[int] = mapped_column(Integer, nullable=True)
-    sleep_regularity: Mapped[int] = mapped_column(Integer, nullable=True)
-
-class DailyReadiness(Base):
-
-    __tablename__ = "daily_readiness"
-    # same fields from raw data
-    id: Mapped[str] = mapped_column(primary_key=True)
-    day: Mapped[date] = mapped_column(Date)
-    score: Mapped[int] = mapped_column(Integer)
-
-    # contributors (flattened)
-    activity_balance: Mapped[int] = mapped_column(Integer)
-    body_temperature: Mapped[int] = mapped_column(Integer)
-    hrv_balance: Mapped[int] = mapped_column(Integer)
-    previous_day_activity: Mapped[int] = mapped_column(Integer)
-    previous_night: Mapped[int] = mapped_column(Integer)
-    recovery_index: Mapped[int] = mapped_column(Integer)
-    resting_heart_rate: Mapped[int] = mapped_column(Integer)
-    sleep_balance: Mapped[int] = mapped_column(Integer)
-    sleep_regularity: Mapped[int] = mapped_column(Integer)
-    temperature_deviation: Mapped[Float] = mapped_column(Float)
-
-    # custom fields
-    vitality_score: Mapped[int] = mapped_column(Integer)
-    alertness_index: Mapped[int] = mapped_column(Integer)
-    resilience_score: Mapped[int] = mapped_column(Integer)
-    balance_quotient: Mapped[int] = mapped_column(Integer)
-    recovery_potential: Mapped[int] = mapped_column(Integer)
 
 Base.metadata.create_all(engine)
 

@@ -1,4 +1,3 @@
-import requests
 from pipelines.sleep_etl import run_dailysleep_pipeline
 from pipelines.readiness_etl import run_dailyreadiness_pipeline
 

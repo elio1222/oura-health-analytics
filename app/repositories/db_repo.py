@@ -3,8 +3,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from dotenv import load_dotenv
 from datetime import date, datetime
 import os
-from jobs.pipelines.sleep_etl import DailySleep
-from jobs.pipelines.readiness_etl import DailyReadiness
+from app.models.models import DailySleep, DailyReadiness
 
 load_dotenv()
 

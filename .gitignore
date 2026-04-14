@@ -1,5 +1,5 @@
 .env
 __pycache__/
 *.pyc
-/hidden
+/tmp
 sleep_etl.log

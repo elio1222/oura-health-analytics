@@ -1,5 +1,5 @@
-from services.db_service import query_from_db
-from services.oura_service import param_builder
+from app.repositories.db_repo import query_from_db
+from app.services.oura_service import param_builder
 from datetime import date, timedelta
 
 

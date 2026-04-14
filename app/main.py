@@ -3,10 +3,10 @@ from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
 import os
 from datetime import date, timedelta, timezone, datetime
-from services.oura_service import fetch_oura_data, run, get_tokens, param_builder
-from services.db_service import query_from_db
-from services.analytics_service import calculate_sleep_summary, calculate_readiness_summary
-from services.ai_service import analyze_oura_analytics
+from app.services.oura_service import fetch_oura_data, run, get_tokens, param_builder
+from app.repositories.db_repo import query_from_db
+from app.services.analytics_service import calculate_sleep_summary, calculate_readiness_summary
+from app.services.ai_service import analyze_oura_analytics
 
 load_dotenv()
 

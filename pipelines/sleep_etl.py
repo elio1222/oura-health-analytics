@@ -1,11 +1,11 @@
-from sqlalchemy import create_engine, DateTime, Date, Integer, String, func
-from sqlalchemy.orm import Mapped, DeclarativeBase, mapped_column, sessionmaker, Session
+from sqlalchemy import create_engine, func
+from sqlalchemy.orm import sessionmaker, Session
 from dotenv import load_dotenv
-from typing import List, Dict
-from datetime import date, datetime
+from datetime import date
 import os
-from services.oura_service import fetch_oura_data, param_builder
+from app.services.oura_service import fetch_oura_data, param_builder
 from dateutil.relativedelta import relativedelta
+from app.models.models import Base, RawDailySleep, DailySleep
 
 load_dotenv()
 
@@ -20,50 +20,6 @@ def get_database_uri():
 
 
 engine = create_engine(get_database_uri())
-
-class Base(DeclarativeBase):
-    pass
-
-class RawDailySleep(Base):
-    __tablename__ = "raw_daily_sleep"
-
-    # root fields
-    id: Mapped[str] = mapped_column(primary_key=True)
-    day: Mapped[date] = mapped_column(Date)
-    score: Mapped[int] = mapped_column(Integer)
-    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-
-    # contributors (flattened)
-    deep_sleep: Mapped[int] = mapped_column(Integer)
-    efficiency: Mapped[int] = mapped_column(Integer)
-    latency: Mapped[int] = mapped_column(Integer)
-    rem_sleep: Mapped[int] = mapped_column(Integer)
-    restfulness: Mapped[int] = mapped_column(Integer)
-    timing: Mapped[int] = mapped_column(Integer) 
-    total_sleep: Mapped[int] = mapped_column(Integer)
-
-class DailySleep(Base):
-    __tablename__ = "daily_sleep"
-
-    # same fields from raw data
-    id: Mapped[str] = mapped_column(String, primary_key=True)
-    day: Mapped[date] = mapped_column(Date)
-    score: Mapped[int] = mapped_column(Integer)
-
-    # contributors (flattened)
-    deep_sleep: Mapped[int] = mapped_column(Integer)
-    efficiency: Mapped[int] = mapped_column(Integer)
-    latency: Mapped[int] = mapped_column(Integer)
-    rem_sleep: Mapped[int] = mapped_column(Integer)
-    restfulness: Mapped[int] = mapped_column(Integer)
-    timing: Mapped[int] = mapped_column(Integer)
-    total_sleep: Mapped[int] = mapped_column(Integer)
-
-    # custom fields
-    performance_score: Mapped[int] = mapped_column(Integer)
-    recovery_score : Mapped[int] = mapped_column(Integer)
-    consistency_score: Mapped[int] = mapped_column(Integer)
-    custom_score: Mapped[int] = mapped_column(Integer)
 
 # creates tables in sql from python objects 
 Base.metadata.create_all(engine)
