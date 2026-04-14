@@ -8,7 +8,20 @@ from jobs.pipelines.readiness_etl import DailyReadiness
 
 load_dotenv()
 
-engine = create_engine(os.getenv("DOCKER_DATABASE_URI"))
+import os
+
+def get_database_uri():
+    # If running inside Docker, override automatically
+    if os.path.exists("/.dockerenv"):
+        return os.getenv(
+            "DOCKER_DATABASE_URI",
+            os.getenv("DATABASE_URI")
+        )
+    return os.getenv("DATABASE_URI")
+
+
+engine = create_engine(get_database_uri())
+
 Session = sessionmaker(bind=engine)
 
 def query_from_db(type_of_data: str, params: dict = None, retries: int = 3) -> dict:

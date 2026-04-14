@@ -9,7 +9,17 @@ import os
 
 load_dotenv()
 
-engine = create_engine(os.getenv("DATABASE_URI"))
+def get_database_uri():
+    # If running inside Docker, override automatically
+    if os.path.exists("/.dockerenv"):
+        return os.getenv(
+            "DOCKER_DATABASE_URI",
+            os.getenv("DATABASE_URI")
+        )
+    return os.getenv("DATABASE_URI")
+
+
+engine = create_engine(get_database_uri())
 
 class Base(DeclarativeBase):
     pass
@@ -118,7 +128,7 @@ def fetch_and_extract():
 
 def transform_and_load():
     """Transforms raw data from RawDailyReadiness table and loads it into a new table"""
-    
+
     Session = sessionmaker(bind=engine)
 
     with Session() as session:

@@ -9,7 +9,17 @@ from dateutil.relativedelta import relativedelta
 
 load_dotenv()
 
-engine = create_engine(os.getenv("DATABASE_URI"))
+def get_database_uri():
+    # If running inside Docker, override automatically
+    if os.path.exists("/.dockerenv"):
+        return os.getenv(
+            "DOCKER_DATABASE_URI",
+            os.getenv("DATABASE_URI")
+        )
+    return os.getenv("DATABASE_URI")
+
+
+engine = create_engine(get_database_uri())
 
 class Base(DeclarativeBase):
     pass
