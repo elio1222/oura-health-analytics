@@ -1,9 +1,7 @@
-from pipelines.sleep_etl import run_dailysleep_pipeline
-from pipelines.readiness_etl import run_dailyreadiness_pipeline
+from pipelines.etl_facade import run_all_etl_pipelines
 
 def main():
-    run_dailysleep_pipeline()
-    run_dailyreadiness_pipeline()
+    run_all_etl_pipelines()
 
 if __name__ == "__main__":
     main()
