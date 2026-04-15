@@ -17,6 +17,9 @@ def fetch_and_extract(
 
         start_of_history = session.query(func.max(model_class.day)).scalar()
         end_date = date.today()
+        
+        if start_of_history is None:
+            start_of_history = date(2024, 12, 1)
 
         while start_of_history < end_date:
             current_end_date = start_of_history + relativedelta(months=1) - relativedelta(days=1)
@@ -42,20 +45,6 @@ def save_raw_data_generic(
         new_record = model_class(**record_obj)
         session.merge(new_record)
     session.commit()
-
-def process_and_save_data_generic(
-        session: Session,
-        model_class,
-        data: dict,
-        process_func=None
-):
-    
-    for d in data:
-        record_obj = process_func(d=d)
-        new_record = model_class(**record_obj)
-        session.merge(new_record)
-    session.commit()
-
 
 def extract_raw_sleep(d: dict) -> dict:
     contributors = d.get("contributors", {})
@@ -93,6 +82,28 @@ def extract_raw_readiness(d: dict) -> dict:
         "sleep_regularity": contributors.get("sleep_regularity")
     }
 
+def extract_raw_stress(d: dict) -> dict:
+    return {
+        "id": d.get("id"),
+        "day": d.get("day"),
+        "day_summary": d.get("day_summary"),
+        "recovery_high": d.get("recovery_high"),
+        "stress_high": d.get("stress_high")
+    }
+
+def process_and_save_data_generic(
+        session: Session,
+        model_class,
+        data: dict,
+        process_func=None
+):
+    
+    for d in data:
+        record_obj = process_func(d=d)
+        new_record = model_class(**record_obj)
+        session.merge(new_record)
+    session.commit()
+
 def process_sleep(d: object) -> dict:
     # formulas
     performance_score = (0.25 * d.rem_sleep) + (0.20 * d.efficiency) + (0.20 * d.latency) + (0.15 * d.total_sleep) + (0.10 * d.deep_sleep) + (0.10 * d.timing)
@@ -126,7 +137,6 @@ def process_sleep(d: object) -> dict:
     }
 
 def process_readiness(d: object) -> dict:
-    print("YOOO")
     temperature_deviation = d.temperature_deviation or 70
     activity_balance = d.activity_balance or 70
     body_temperature = d.body_temperature or 70
@@ -200,6 +210,26 @@ def process_readiness(d: object) -> dict:
         "recovery_potential": recovery_potential
     }
 
+def process_stress(d: object) -> dict:
+    """stress_index = 0.6 * d.stress_high - 0.4 * d.recovery_high"""
+    """resilience_rating = 0.7 * d.recovery_high - 0.3 * d.stress_high"""
+
+    stress_high = d.stress_high or 7200
+    recovery_high = d.recovery_high or 3600
+
+    stress_index = 0.6 * stress_high - 0.4 * recovery_high
+    resilience_rating = 0.7 * recovery_high - 0.3 * stress_high
+
+    return {
+        "id": d.id,
+        "day": d.day,
+        "day_summary": d.day_summary,
+        "recovery_high": recovery_high,
+        "stress_high": stress_high,
+        "stress_index": stress_index,
+        "resilience_rating": resilience_rating
+    }
+
 
 def transform_and_load(
         engine,
@@ -208,6 +238,7 @@ def transform_and_load(
         process_func
 ):
     Session = sessionmaker(bind=engine)
+    
 
     with Session() as session:
 

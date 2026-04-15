@@ -39,5 +39,16 @@ def run_all_etl_pipelines():
         process_func=etl.process_readiness
     )
 
+    # for stress
+    etl.run_etl_pipeline(
+        engine=engine,
+        raw_model_class=model.RawDailyStress,
+        target_model_class=model.DailyStress,
+        url="https://api.ouraring.com/v2/usercollection/daily_stress",
+        param_builder=param_builder,
+        extract_raw_func=etl.extract_raw_stress,
+        process_func=etl.process_stress
+    )
+
 if __name__ == "__main__":
     run_all_etl_pipelines()

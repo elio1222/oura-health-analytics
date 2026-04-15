@@ -95,3 +95,27 @@ class DailyReadiness(Base):
     resilience_score: Mapped[int] = mapped_column(Integer)
     balance_quotient: Mapped[int] = mapped_column(Integer)
     recovery_potential: Mapped[int] = mapped_column(Integer)
+
+class RawDailyStress(Base):
+    __tablename__ = "raw_daily_stress"
+
+    # root fields
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    day: Mapped[date] = mapped_column(Date)
+    day_summary: Mapped[str] = mapped_column(String, nullable=True)
+    recovery_high: Mapped[int] = mapped_column(Integer, nullable=True)
+    stress_high: Mapped[int] = mapped_column(Integer, nullable=True)
+
+class DailyStress(Base):
+    __tablename__ = "daily_stress"
+
+    # same fields from raw daily stress
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    day: Mapped[date] = mapped_column(Date)
+    day_summary: Mapped[str] = mapped_column(String, nullable=True)
+    recovery_high: Mapped[int] = mapped_column(Integer, nullable=True)
+    stress_high: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    # custom fields
+    stress_index: Mapped[int] = mapped_column(Integer, nullable=True)
+    resilience_rating: Mapped[int] = mapped_column(Integer, nullable=True) 
