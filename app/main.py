@@ -5,7 +5,7 @@ import os
 from datetime import date, timedelta, timezone, datetime
 from app.services.oura_service import fetch_oura_data, run, get_tokens, param_builder
 from app.repositories.db_repo import query_from_db
-from app.services.analytics_service import calculate_sleep_summary, calculate_readiness_summary
+from app.services.analytics_service import calculate_sleep_summary, calculate_readiness_summary, calculate_stress_summary
 from app.services.ai_service import analyze_oura_analytics
 
 load_dotenv()
@@ -67,9 +67,7 @@ def get_latest_readiness():
 
 @app.get("/readiness/summary")
 def get_readiness_summary():
-    today = date.today()
-    week_from_td = today - timedelta(days=7)
-    return calculate_readiness_summary(params=param_builder(start_date=week_from_td, end_date=today))
+    return calculate_readiness_summary()
 
 """Daily Activity"""
 @app.get("/activity/")
@@ -88,57 +86,16 @@ def get_latest_activity():
 """Daily Stress"""
 @app.get("/stress/")
 def get_stress(start_date: str, end_date: str):
-    url = "https://api.ouraring.com/v2/usercollection/daily_stress"
-
-    return fetch_oura_data(url=url, params=param_builder(start_date=start_date, end_date=end_date))
+    return query_from_db(type_of_data="stress", params=param_builder(start_date=start_date, end_date=end_date))
 
 @app.get("/stress/latest")
 def get_latest_stress():
-    today = date.today()
-    url = "https://api.ouraring.com/v2/usercollection/daily_stress"
+    return query_from_db(type_of_data="stress", params=param_builder(start_date=date.today(), end_date=date.today()))
 
-    return fetch_oura_data(url=url, params=param_builder(start_date=today, end_date=today))
 
 @app.get("/stress/summary")
 def get_stress_summary():
-    yesterday = date.today() - timedelta(days=1)
-    week_from_td = yesterday - timedelta(days=6)
-    url = "https://api.ouraring.com/v2/usercollection/daily_stress"
-
-    data = fetch_oura_data(url=url, params=param_builder(start_date=week_from_td, end_date=yesterday))
-    if data.get("data") and len(data.get("data")) > 0:
-
-        recovery_high = 0
-        stress_high = 0
-        day_summary = {
-            "stressful": 0,
-            "restored": 0,
-            "normal": 0
-        }
-        length = 0
-
-        for scores in data["data"]:
-            if scores["day_summary"] is None:
-                continue
-            recovery_high += scores["recovery_high"]
-            stress_high += scores["stress_high"]
-            day_summary.setdefault(scores["day_summary"], 0)
-            day_summary[scores["day_summary"]] += 1
-            length += 1
-
-        avg_recovery = recovery_high / length
-        avg_stress = stress_high / length
-
-
-    return {
-        "dates": {
-            "start_date": week_from_td,
-            "end_date": yesterday
-        },
-        "avg_recovery": round(avg_recovery / 3600, 2),
-        "avg_stress": round(avg_stress / 3600, 2),
-        "day_summaries": day_summary
-    }
+    return calculate_stress_summary()
 
 """Personal Info"""
 @app.get("/user/")
@@ -196,4 +153,15 @@ def get_health_assistant_insight():
     }
 
     return analyze_oura_analytics(user_data=sleep_readiness_stress_data)
+
+@app.get("/insights/summary")
+def get_insights_summary():
+
+    sleep_summary = calculate_sleep_summary()
+
+
+# insight endpoints
+# /insights/summary
+# /insights/recommendations
+# /insight/ai
 

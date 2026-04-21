@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 /tmp
 sleep_etl.log
+cron.log

@@ -4,8 +4,8 @@ from datetime import date, timedelta
 
 
 def calculate_sleep_summary():
-
-    yesterday = date.today() - timedelta(days=1)
+    
+    yesterday = date.today()
     week_from_td = yesterday - timedelta(days=6)
     params = param_builder(start_date=week_from_td, end_date=yesterday)
 
@@ -44,28 +44,13 @@ def calculate_sleep_summary():
     best_day = max(data, key=lambda d: d.score)
     worst_day = min(data, key=lambda d: d.score)
 
-
-    mid = len(scores) // 2
-    first_half = scores[:mid]
-    second_half = scores[mid:]
-
-    trend = "stable"
-    if first_half and second_half:
-        first_avg = sum(first_half) / len(first_half)
-        second_avg = sum(second_half) / len(second_half)
-
-        if second_avg > first_avg + 2:
-            trend = "improving"
-        elif second_avg < first_avg - 2:
-            trend = "declining"
-
     return {
         "avg_score": avg_score,
         "days_tracked": len(data),
 
-        "categories": category_avgs,
+        "avg_category_scores": category_avgs,
 
-        "trend": trend,
+        "trend": calculate_trend(scores=scores),
 
         "best_day": {
             "date": best_day.day,
@@ -78,7 +63,11 @@ def calculate_sleep_summary():
         }
     }
 
-def calculate_readiness_summary(params: dict) -> dict:
+def calculate_readiness_summary() -> dict:
+
+    yesterday = date.today()
+    week_from_td = yesterday - timedelta(days=6)
+    params = param_builder(start_date=week_from_td, end_date=yesterday)
 
 
     data = query_from_db(type_of_data="readiness", params=params)
@@ -94,26 +83,84 @@ def calculate_readiness_summary(params: dict) -> dict:
     sleep_balance = [d.sleep_balance for d in data if d.sleep_balance is not None]
     sleep_regularity = [d.sleep_regularity for d in data if d.sleep_regularity is not None]
 
-    # unpacking parameter
-    week_from_td, today = params.values()
+    category_avgs = {
+        "activity_balance": round(sum(activity_balance) / len(activity_balance)),
+        "body_temperature": round(sum(body_temperature) / len(body_temperature)),
+        "hrv_balance": round(sum(hrv_balance) / len(hrv_balance)),
+        "previous_day_activity": round(sum(previous_day_activity) / len(previous_day_activity)),
+        "previous_night": round(sum(previous_night) / len(previous_night)),
+        "recovery_index": round(sum(recovery_index) / len(recovery_index)),
+        "resting_heart_rate": round(sum(resting_heart_rate) / len(resting_heart_rate)),
+        "sleep_balance": round(sum(sleep_balance) / len(sleep_balance)),
+        "sleep_regularity": round(sum(sleep_regularity) / len(sleep_regularity))
+        }
+    
+    best_day = max(data, key=lambda d: d.score)
+    worst_day = min(data, key=lambda d: d.score)
 
-    readiness_stats = {
-        "dates": {
-            "start_date": week_from_td,
-            "end_date": today
+    return {
+        "avg_score": round(sum(scores) / len(data)),
+        "days_tracked": len(data),
+
+        "avg_category_scores": category_avgs,
+
+        "trend": calculate_trend(scores=scores),
+
+        "best_day": {
+            "date": best_day.day,
+            "score": best_day.score
         },
-        "avg_scores": {
-            "score": round(sum(scores) / len(scores), 2),
-            "activity_balance": round(sum(activity_balance) / len(activity_balance), 2),
-            "body_temperature": round(sum(body_temperature) / len(body_temperature), 2),
-            "hrv_balance": round(sum(hrv_balance) / len(hrv_balance), 2),
-            "previous_day_activity": round(sum(previous_day_activity) / len(previous_day_activity), 2),
-            "previous_night": round(sum(previous_night) / len(previous_night), 2),
-            "recovery_index": round(sum(recovery_index) / len(recovery_index), 2),
-            "resting_heart_rate": round(sum(resting_heart_rate) / len(resting_heart_rate), 2),
-            "sleep_balance": round(sum(sleep_balance) / len(sleep_balance), 2),
-            "sleep_regularity": round(sum(sleep_regularity) / len(sleep_regularity), 2)
+
+        "worst_day": {
+            "date": worst_day.day,
+            "score": worst_day.score
         }
     }
 
-    return readiness_stats
+def calculate_stress_summary():
+    today = date.today()
+    week_from_td = date.today() - timedelta(days=6)
+    params = param_builder(start_date=week_from_td, end_date=today)
+    data = query_from_db(type_of_data="stress", params=params)
+
+    recovery_high = [d.recovery_high for d in data if d.recovery_high is not None]
+    
+    stress_high = [d.stress_high for d in data if d.stress_high is not None]
+
+    counts = {}
+
+    for d in data:
+        if not d.day_summary:
+            continue
+        counts[d.day_summary] = counts.get(d.day_summary, 0) + 1
+
+    week_summary = max(counts, key=counts.get)
+
+    category_avgs = {
+        "avg_recovery_time": round(round(sum(recovery_high) / len(data)) / 3600, 2),
+        "avg_stress_time": round(round(sum(stress_high) / len(data)) / 3600, 2)
+    }
+
+
+    return {
+        "week_summary": week_summary,
+        "days_tracked": len(data),
+        "avg_category_times": category_avgs,
+    }
+
+def calculate_trend(scores: list) -> str:
+    mid = len(scores) // 2
+    first_half = scores[:mid]
+    second_half = scores[mid:]
+
+    trend = "stable"
+    if first_half and second_half:
+        first_avg = sum(first_half) / len(first_half)
+        second_avg = sum(second_half) / len(second_half)
+
+        if second_avg > first_avg + 2:
+            trend = "improving"
+        elif second_avg < first_avg - 2:
+            trend = "declining"
+
+    return trend
