@@ -7,6 +7,7 @@ from app.services.oura_service import fetch_oura_data, run, get_tokens, param_bu
 from app.repositories.db_repo import query_from_db
 from app.services.analytics_service import calculate_sleep_summary, calculate_readiness_summary, calculate_stress_summary
 from app.services.ai_service import analyze_oura_analytics
+from app.schemas.schemas import DailySleepSchema, DailyReadinessSchema, DailyStressSchema 
 
 load_dotenv()
 
@@ -136,32 +137,42 @@ def get_latest_sleep_routes():
 
     return fetch_oura_data(url=url, params=param_builder(start_date=yesterday, end_date=today))
 
-@app.get("/health-assistant/insight")
-def get_health_assistant_insight():
-    params = param_builder(start_date=date.today() - timedelta(days=6), end_date=date.today())
-
-    sleep_data = fetch_oura_data(url="https://api.ouraring.com/v2/usercollection/daily_sleep", params=params)
-
-    readiness_data = fetch_oura_data(url="https://api.ouraring.com/v2/usercollection/daily_readiness", params=params)
-
-    stress_data = fetch_oura_data(url="https://api.ouraring.com/v2/usercollection/daily_stress", params=params)
-
-    sleep_readiness_stress_data = {
-        "sleep_data": sleep_data,
-        "readiness_data": readiness_data,
-        "stress_data": stress_data
-    }
-
-    return analyze_oura_analytics(user_data=sleep_readiness_stress_data)
-
 @app.get("/insights/summary")
 def get_insights_summary():
 
-    sleep_summary = calculate_sleep_summary()
+    return {
+        "days_tracked": {
+            "start_date": date.today() - timedelta(days=6),
+            "end_date": date.today()
+        },
+        "sleep_summary": calculate_sleep_summary(),
+        "readiness_summary": calculate_readiness_summary(),
+        "stress_summary": calculate_stress_summary()
+    }
 
+@app.get("/insights/ai")
+def get_health_assistant_insight():
+
+    params = param_builder(start_date=date.today() - timedelta(days=6), end_date=date.today())
+
+    sleep_query = query_from_db(type_of_data="sleep", params=params)
+    readiness_query = query_from_db(type_of_data="readiness", params=params)
+    stress_query = query_from_db(type_of_data="stress", params=params)
+    
+    data = {
+        "sleep_data": [
+            DailySleepSchema.model_validate(obj).model_dump(mode="json") for obj in sleep_query
+        ],
+        "readiness_data": [
+            DailyReadinessSchema.model_validate(obj).model_dump(mode="json") for obj in readiness_query
+        ],
+        "stress_data": [
+            DailyStressSchema.model_validate(obj).model_dump(mode="json") for obj in stress_query
+        ]
+    }
+
+    return analyze_oura_analytics(user_data=data)
 
 # insight endpoints
-# /insights/summary
 # /insights/recommendations
-# /insight/ai
 

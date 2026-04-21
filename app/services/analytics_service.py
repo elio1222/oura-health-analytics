@@ -164,3 +164,15 @@ def calculate_trend(scores: list) -> str:
             trend = "declining"
 
     return trend
+
+
+def get_all_summaries():
+    return {
+        "days_tracked": {
+            "start_date": date.today() - timedelta(days=6),
+            "end_date": date.today()
+        },
+        "sleep_summary": calculate_sleep_summary(),
+        "readiness_summary": calculate_readiness_summary(),
+        "stress_summary": calculate_stress_summary()
+    }
