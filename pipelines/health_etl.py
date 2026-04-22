@@ -3,6 +3,9 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import func
 from dateutil.relativedelta import relativedelta
 from app.services.oura_service import fetch_oura_data
+import logging
+
+logger = logging.getLogger(__name__)
 
 def fetch_and_extract(
         engine,
@@ -27,9 +30,11 @@ def fetch_and_extract(
 
             try:
                 data = fetch_oura_data(url=url, params=params)
+                logger.info("Fetched %d records", len(data))
                 save_raw_data_generic(session=session, model_class=model_class, data=data, extract_func=extract_raw_func)
+                logger.info("Extracted %d records (raw data) into PSQL", len(data))
             except Exception as e:
-                print(e)
+                logger.exception("Failed whilst fetching and/or extracting with the following parameters: %s", params)
 
             start_of_history += relativedelta(months=1)
 
@@ -252,11 +257,13 @@ def transform_and_load(
             current_end_date = start_of_history + relativedelta(months=1) - relativedelta(day=1)
 
             try:
+                logger.info("Querying raw data from PSQL database")
                 data = session.query(raw_model_class).filter(raw_model_class.day >= start_of_history, raw_model_class.day <= current_end_date).all()
-
+                logger.info("Queried %d records", len(data))
                 process_and_save_data_generic(session=session, model_class=target_model_class, data=data, process_func=process_func)
+                logger.info("Processed and saved %d into PSQL database", len(data))
             except Exception as e:
-                print(e)
+                logger.exception("Failed whilst querying and/or processing and saving data with the following parameters: start_date: %s end_date: %s", start_of_history, current_end_date)
 
             start_of_history += relativedelta(months=1)
 
@@ -271,6 +278,7 @@ def run_etl_pipeline(
         process_func
 ):
     try:
+        logger.info("Fetching & Extracting raw data from Oura API")
         fetch_and_extract(
             engine=engine,
             model_class=raw_model_class,
@@ -278,12 +286,13 @@ def run_etl_pipeline(
             param_builder=param_builder,
             extract_raw_func=extract_raw_func
         )
+        logger.info("Transforming & Loading raw data to processed data")
         transform_and_load(
             engine=engine,
             raw_model_class=raw_model_class,
             target_model_class=target_model_class,
             process_func=process_func
         )
-        # log successful
+        logger.info("Completed ETL pipeline")
     except Exception as e:
         print(e)
