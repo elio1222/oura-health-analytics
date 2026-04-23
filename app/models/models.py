@@ -121,6 +121,118 @@ class DailyStress(Base):
     stress_index: Mapped[int] = mapped_column(Integer, nullable=True)
     resilience_rating: Mapped[int] = mapped_column(Integer, nullable=True)
 
+class RawDailyActivity(Base):
+    __tablename__ = "raw_daily_activity"
+
+    # identifiers (required)
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    day: Mapped[date] = mapped_column(Date)
+
+    # meta
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    # core activity metrics
+    active_calories: Mapped[int] = mapped_column(Integer, nullable=True)
+    total_calories: Mapped[int] = mapped_column(Integer, nullable=True)
+    target_calories: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    steps: Mapped[int] = mapped_column(Integer, nullable=True)
+    equivalent_walking_distance: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    # MET + activity intensity
+    average_met_minutes: Mapped[float] = mapped_column(Float, nullable=True)
+
+    high_activity_met_minutes: Mapped[int] = mapped_column(Integer, nullable=True)
+    medium_activity_met_minutes: Mapped[int] = mapped_column(Integer, nullable=True)
+    low_activity_met_minutes: Mapped[int] = mapped_column(Integer, nullable=True)
+    sedentary_met_minutes: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    # time spent (seconds)
+    high_activity_time: Mapped[int] = mapped_column(Integer, nullable=True)
+    medium_activity_time: Mapped[int] = mapped_column(Integer, nullable=True)
+    low_activity_time: Mapped[int] = mapped_column(Integer, nullable=True)
+    sedentary_time: Mapped[int] = mapped_column(Integer, nullable=True)
+    resting_time: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    # inactivity
+    inactivity_alerts: Mapped[int] = mapped_column(Integer, nullable=True)
+    non_wear_time: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    # targets
+    target_meters: Mapped[int] = mapped_column(Integer, nullable=True)
+    meters_to_target: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    # overall score
+    score: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    # contributors (flattened)
+    meet_daily_targets: Mapped[int] = mapped_column(Integer, nullable=True)
+    move_every_hour: Mapped[int] = mapped_column(Integer, nullable=True)
+    recovery_time: Mapped[int] = mapped_column(Integer, nullable=True)
+    stay_active: Mapped[int] = mapped_column(Integer, nullable=True)
+    training_frequency: Mapped[int] = mapped_column(Integer, nullable=True)
+    training_volume: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    # time series MET data
+    met_interval: Mapped[int] = mapped_column(Integer, nullable=True)
+    met_items: Mapped[list[int]] = mapped_column(ARRAY(Integer), nullable=True)
+    met_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # raw strings
+    class_5_min: Mapped[str] = mapped_column(String, nullable=True)
+
+    # timestamp
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+
+class DailyActivity(Base):
+    __tablename__ = "daily_activity"
+
+    # identifiers (required)
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    day: Mapped[date] = mapped_column(Date)
+
+    # core activity metrics
+    active_calories: Mapped[int] = mapped_column(Integer, nullable=True)
+    total_calories: Mapped[int] = mapped_column(Integer, nullable=True)
+    target_calories: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    steps: Mapped[int] = mapped_column(Integer, nullable=True)
+    equivalent_walking_distance: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    # MET + activity intensity
+    average_met_minutes: Mapped[float] = mapped_column(Float, nullable=True)
+    high_activity_met_minutes: Mapped[int] = mapped_column(Integer, nullable=True)
+    medium_activity_met_minutes: Mapped[int] = mapped_column(Integer, nullable=True)
+    low_activity_met_minutes: Mapped[int] = mapped_column(Integer, nullable=True)
+    sedentary_met_minutes: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    # time spent (seconds)
+    high_activity_time: Mapped[int] = mapped_column(Integer, nullable=True)
+    medium_activity_time: Mapped[int] = mapped_column(Integer, nullable=True)
+    low_activity_time: Mapped[int] = mapped_column(Integer, nullable=True)
+    sedentary_time: Mapped[int] = mapped_column(Integer, nullable=True)
+    resting_time: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    # inactivity
+    inactivity_alerts: Mapped[int] = mapped_column(Integer, nullable=True)
+    non_wear_time: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    # targets
+    target_meters: Mapped[int] = mapped_column(Integer, nullable=True)
+    meters_to_target: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    # overall score
+    score: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    # contributors (flattened)
+    meet_daily_targets: Mapped[int] = mapped_column(Integer, nullable=True)
+    move_every_hour: Mapped[int] = mapped_column(Integer, nullable=True)
+    recovery_time: Mapped[int] = mapped_column(Integer, nullable=True)
+    stay_active: Mapped[int] = mapped_column(Integer, nullable=True)
+    training_frequency: Mapped[int] = mapped_column(Integer, nullable=True)
+    training_volume: Mapped[int] = mapped_column(Integer, nullable=True)
+
 class RawSleepRoute(Base):
     __tablename__ = "raw_sleep_routes"
 
@@ -243,3 +355,14 @@ class SleepRoute(Base):
     hrv_interval: Mapped[int] = mapped_column(Integer, nullable=True)
     hrv_items: Mapped[list[int]] = mapped_column(ARRAY(Integer), nullable=True)
     hrv_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+
+class User(Base):
+    __tablename__ = "user"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    age: Mapped[int] = mapped_column(Integer)
+    weight: Mapped[float] = mapped_column(Float)
+    height: Mapped[float] = mapped_column(Float)
+    biological_sex: Mapped[str] = mapped_column(String)
+    email: Mapped[str] = mapped_column(String, nullable=True)
+         

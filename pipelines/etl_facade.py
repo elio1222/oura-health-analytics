@@ -23,52 +23,64 @@ def run_all_etl_pipelines():
 
     engine = create_engine(get_database_uri())
     
-    # for daily sleep
-    logger.info("Starting Daily Sleep ETL pipeline")
-    etl.run_etl_pipeline(
-        engine=engine,
-        raw_model_class=model.RawDailySleep,
-        target_model_class=model.DailySleep,
-        url="https://api.ouraring.com/v2/usercollection/daily_sleep",
-        param_builder=param_builder,
-        extract_raw_func=etl.extract_raw_sleep,
-        process_func=etl.process_sleep
-    )
+    # # for daily sleep
+    # logger.info("Starting Daily Sleep ETL pipeline")
+    # etl.run_etl_pipeline(
+    #     engine=engine,
+    #     raw_model_class=model.RawDailySleep,
+    #     target_model_class=model.DailySleep,
+    #     url="https://api.ouraring.com/v2/usercollection/daily_sleep",
+    #     param_builder=param_builder,
+    #     extract_raw_func=etl.extract_raw_sleep,
+    #     process_func=etl.process_sleep
+    # )
 
-    # for readiness
-    logger.info("Starting Daily Readiness ETL pipeline")
-    etl.run_etl_pipeline(
-        engine=engine,
-        raw_model_class=model.RawDailyReadiness,
-        target_model_class=model.DailyReadiness,
-        url="https://api.ouraring.com/v2/usercollection/daily_readiness",
-        param_builder=param_builder,
-        extract_raw_func=etl.extract_raw_readiness,
-        process_func=etl.process_readiness
-    )
+    # # for readiness
+    # logger.info("Starting Daily Readiness ETL pipeline")
+    # etl.run_etl_pipeline(
+    #     engine=engine,
+    #     raw_model_class=model.RawDailyReadiness,
+    #     target_model_class=model.DailyReadiness,
+    #     url="https://api.ouraring.com/v2/usercollection/daily_readiness",
+    #     param_builder=param_builder,
+    #     extract_raw_func=etl.extract_raw_readiness,
+    #     process_func=etl.process_readiness
+    # )
 
-    # for stress
-    logger.info("Starting Daily Stress ETL Pipeline")
-    etl.run_etl_pipeline(
-        engine=engine,
-        raw_model_class=model.RawDailyStress,
-        target_model_class=model.DailyStress,
-        url="https://api.ouraring.com/v2/usercollection/daily_stress",
-        param_builder=param_builder,
-        extract_raw_func=etl.extract_raw_stress,
-        process_func=etl.process_stress
-    )
+    # # for stress
+    # logger.info("Starting Daily Stress ETL Pipeline")
+    # etl.run_etl_pipeline(
+    #     engine=engine,
+    #     raw_model_class=model.RawDailyStress,
+    #     target_model_class=model.DailyStress,
+    #     url="https://api.ouraring.com/v2/usercollection/daily_stress",
+    #     param_builder=param_builder,
+    #     extract_raw_func=etl.extract_raw_stress,
+    #     process_func=etl.process_stress
+    # )
 
-    # for sleep routes
-    logger.info("Starting Sleep Routes ETL Pipeline")
+    # # for sleep routes
+    # logger.info("Starting Sleep Routes ETL Pipeline")
+    # etl.run_etl_pipeline(
+    #     engine=engine,
+    #     raw_model_class=model.RawSleepRoute,
+    #     target_model_class=model.SleepRoute,
+    #     url="https://api.ouraring.com/v2/usercollection/sleep",
+    #     param_builder=param_builder,
+    #     extract_raw_func=etl.extract_raw_sleep_routes,
+    #     process_func=etl.process_sleep_routes
+    # )
+
+    # for activity
+    logger.info("Starting Daily Activity ETL Pipeline")
     etl.run_etl_pipeline(
         engine=engine,
-        raw_model_class=model.RawSleepRoute,
-        target_model_class=model.SleepRoute,
-        url="https://api.ouraring.com/v2/usercollection/sleep",
+        raw_model_class=model.RawDailyActivity,
+        target_model_class=model.DailyActivity,
+        url="https://api.ouraring.com/v2/usercollection/daily_activity",
         param_builder=param_builder,
-        extract_raw_func=etl.extract_raw_sleep_routes,
-        process_func=etl.process_sleep_routes
+        extract_raw_func=etl.extract_raw_activity,
+        process_func=etl.process_activity
     )
 
     logger.info("Finished executing all ETL pipelines")

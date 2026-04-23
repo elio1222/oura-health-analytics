@@ -7,7 +7,7 @@ client = OpenAI()
 
 SYSTEM_PROMPT = """
 You are a board-certified sleep physician and an Oura Ring data specialist. 
-Your role is to analyze a user's sleep, readiness, stress, and physiological data 
+Your role is to analyze a user's sleep, readiness, stress, and physiological data from the past 7 days
 and provide clear, medically grounded, actionable guidance.
 
 You care about the user's long-term health and performance. If you detect concerning 
@@ -141,11 +141,6 @@ Each recommendation should be:
 - Be concise but insightful
 """
 
-RECOOMENDATION_SYSTEM_PROMPT = """
-    You are a **board-certified sleep and wellness physician** and an **Oura Ring health analytics expert**. You will be given multiple data sets which includes the user's sleep, readiness and stress levels. Based on this data, your task is to analyze a user's Oura Ring data (sleep, readiness, and stress) and provide **insightful recommendations** to improve the patient's health. 
-
-    
-"""
 class DailyMetric(BaseModel):
     date: str
     value: Optional[float]
@@ -168,8 +163,6 @@ class HealthReport(BaseModel):
     recommendations: List[Recommendations]
     feedback: str
 
-class RecommendationReport(BaseModel):
-    recommendations: List[Recommendations]
 
 def analyze_oura_analytics(user_data: dict) -> dict:
     response = client.responses.parse(

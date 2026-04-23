@@ -96,6 +96,72 @@ def extract_raw_stress(d: dict) -> dict:
         "stress_high": d.get("stress_high")
     }
 
+def extract_raw_activity(d: dict) -> dict:
+    contributors = d.get("contributors", {})
+    met = d.get("met", {})
+    meta = d.get("meta", {})
+
+    return {
+        # identifiers
+        "id": d.get("id"),
+        "day": d.get("day"),
+
+        # meta
+        "updated_at": meta.get("updated_at"),
+        "version": meta.get("version"),
+
+        # core activity
+        "active_calories": d.get("active_calories"),
+        "total_calories": d.get("total_calories"),
+        "target_calories": d.get("target_calories"),
+
+        "steps": d.get("steps"),
+        "equivalent_walking_distance": d.get("equivalent_walking_distance"),
+
+        # MET + intensity
+        "average_met_minutes": d.get("average_met_minutes"),
+
+        "high_activity_met_minutes": d.get("high_activity_met_minutes"),
+        "medium_activity_met_minutes": d.get("medium_activity_met_minutes"),
+        "low_activity_met_minutes": d.get("low_activity_met_minutes"),
+        "sedentary_met_minutes": d.get("sedentary_met_minutes"),
+
+        # time (seconds)
+        "high_activity_time": d.get("high_activity_time"),
+        "medium_activity_time": d.get("medium_activity_time"),
+        "low_activity_time": d.get("low_activity_time"),
+        "sedentary_time": d.get("sedentary_time"),
+        "resting_time": d.get("resting_time"),
+
+        # inactivity
+        "inactivity_alerts": d.get("inactivity_alerts"),
+        "non_wear_time": d.get("non_wear_time"),
+
+        # targets
+        "target_meters": d.get("target_meters"),
+        "meters_to_target": d.get("meters_to_target"),
+
+        # score
+        "score": d.get("score"),
+
+        # contributors (flattened)
+        "meet_daily_targets": contributors.get("meet_daily_targets"),
+        "move_every_hour": contributors.get("move_every_hour"),
+        "recovery_time": contributors.get("recovery_time"),
+        "stay_active": contributors.get("stay_active"),
+        "training_frequency": contributors.get("training_frequency"),
+        "training_volume": contributors.get("training_volume"),
+
+        # MET time series
+        "met_interval": met.get("interval"),
+        "met_items": met.get("items"),
+        "met_timestamp": met.get("timestamp"),
+
+        # misc
+        "class_5_min": d.get("class_5_min"),
+        "timestamp": d.get("timestamp"),
+    }
+
 def extract_raw_sleep_routes(d: dict) -> dict:
     heart_rate = d.get("heart_rate", {})
     hrv = d.get("hrv", {})
@@ -361,6 +427,52 @@ def process_sleep_routes(d: object) -> dict:
         "hrv_timestamp": d.hrv_timestamp,
     }
 
+def process_activity(d: object) -> dict:
+    return {
+        # identifiers
+        "id": d.id,
+        "day": d.day,
+
+        # core activity metrics
+        "active_calories": d.active_calories,
+        "total_calories": d.total_calories,
+        "target_calories": d.target_calories,
+        "steps": d.steps,
+        "equivalent_walking_distance": d.equivalent_walking_distance,
+
+        # MET + activity intensity
+        "average_met_minutes": d.average_met_minutes,
+        "high_activity_met_minutes": d.high_activity_met_minutes,
+        "medium_activity_met_minutes": d.medium_activity_met_minutes,
+        "low_activity_met_minutes": d.low_activity_met_minutes,
+        "sedentary_met_minutes": d.sedentary_met_minutes,
+
+        # time spent (seconds)
+        "high_activity_time": d.high_activity_time,
+        "medium_activity_time": d.medium_activity_time,
+        "low_activity_time": d.low_activity_time,
+        "sedentary_time": d.sedentary_time,
+        "resting_time": d.resting_time,
+
+        # inactivity
+        "inactivity_alerts": d.inactivity_alerts,
+        "non_wear_time": d.non_wear_time,
+
+        # targets
+        "target_meters": d.target_meters,
+        "meters_to_target": d.meters_to_target,
+
+        # overall score
+        "score": d.score,
+
+        # contributors
+        "meet_daily_targets": d.meet_daily_targets,
+        "move_every_hour": d.move_every_hour,
+        "recovery_time": d.recovery_time,
+        "stay_active": d.stay_active,
+        "training_frequency": d.training_frequency,
+        "training_volume": d.training_volume,
+    }
 
 def transform_and_load(
         engine,
@@ -421,4 +533,4 @@ def run_etl_pipeline(
         )
         logger.info("Completed ETL pipeline")
     except Exception as e:
-        print(e)
+        logger.exception(e)
