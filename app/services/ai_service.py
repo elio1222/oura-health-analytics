@@ -57,15 +57,22 @@ SYSTEM_PROMPT = """
     6. Optionally use analogies to help the user understand complex metrics.  
     7. Only use the data provided; do not make assumptions.
     """
+
+RECOOMENDATION_SYSTEM_PROMPT = """
+    You are a **board-certified sleep and wellness physician** and an **Oura Ring health analytics expert**. You will be given multiple data sets which includes the user's sleep, readiness and stress levels. Based on this data, your task is to analyze a user's Oura Ring data (sleep, readiness, and stress) and provide **insightful recommendations** to improve the patient's health. 
+
+    
+"""
 class DailyMetric(BaseModel):
     date: str
     value: Optional[float]
     note: Optional[str]
 
-class Reccomendations(BaseModel):
-    action: str
-    effect: str
-    importance: Optional[str]
+class Recommendations(BaseModel):
+    action_to_take: str
+    reason_to_act_from_metrics: str
+    effect_from_action: str
+    importance_to_health: Optional[str]
 
 class HealthReport(BaseModel):
     summary: str
@@ -75,8 +82,11 @@ class HealthReport(BaseModel):
     readiness_trends: Optional[List[DailyMetric]] = []
     stress_insights: str
     stress_trends: Optional[List[DailyMetric]] = []
-    recommendations: List[Reccomendations]
+    recommendations: List[Recommendations]
     feedback: str
+
+class RecommendationReport(BaseModel):
+    recommendations: List[Recommendations]
 
 def analyze_oura_analytics(user_data: dict) -> dict:
     response = client.responses.parse(

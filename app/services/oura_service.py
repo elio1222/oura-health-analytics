@@ -68,6 +68,7 @@ def refresh_tokens() -> bool:
         return True
 
     except Exception as e:
+        #print("REFRESH_TOKEN")
         print(e)
         return False
     
@@ -81,31 +82,44 @@ def param_builder(start_date: date, end_date: date) -> dict:
         "end_date": end_date
     }
 
+# whole function needs to be rewritten
 def fetch_oura_data(url: str, params: dict, retries: int = 3) -> dict:
     headers = {
         "Authorization": f"Bearer {os.getenv('ACCESS_TOKEN')}"
     }
 
-    for _ in range(retries):
-        response = requests.get(url=url, headers=headers, params=params)
-        response.raise_for_status()
+    try:
+        for _ in range(retries):
+            response = requests.get(url=url, headers=headers, params=params)
+            #print("HIIII")
+            # response.raise_for_status()
 
-        data = response.json()
+            data = response.json()
 
-        if response.status_code == 200 and len(data["data"]) > 0 if data.get("data") else None:
-            return data
-        if response.status_code == 200:
-            return data
-        if response.status_code == 401:
-            refresh_tokens()
-        if response.status_code == 403:
-            return {"status_code": response.status_code, "description": "the requested resources requires additional permissions or the user's Oura subscription has expired."}
-        if response.status_code == 429:
-            return {"Message": "Wait 5 minutes for data retrieval"}
-        
-        if len(data["data"]) == 0:
-            print(f"Paramters: {params} are not available yet.")
-            params["start_date"] = shift_date(params["start_date"]) if params.get("start_date") else None
-            params["end_date"] = shift_date(params["end_date"]) if params.get("end_date") else None
+            #print(f"RESPONSE CODE {response.status_code}")
 
-    return {"error": "no data found"}
+            if response.status_code == 200 and len(data["data"]) > 0 if data.get("data") else None:
+                return data
+            if response.status_code == 200:
+                return data
+            if response.status_code == 401:
+                print("yo")
+                refresh_tokens()
+            if response.status_code == 403:
+                return {"status_code": response.status_code, "description": "the requested resources requires additional permissions or the user's Oura subscription has expired."}
+            if response.status_code == 429:
+                return {"Message": "Wait 5 minutes for data retrieval"}
+            
+            if len(data["data"]) == 0:
+                print(f"Paramters: {params} are not available yet.")
+                params["start_date"] = shift_date(params["start_date"]) if params.get("start_date") else None
+                params["end_date"] = shift_date(params["end_date"]) if params.get("end_date") else None
+
+    except Exception as e:
+        # this is a bug
+        data = {
+            "error": e
+        }
+        print(data)
+        import json
+        return json.dumps(data, indent=4)

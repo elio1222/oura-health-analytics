@@ -96,6 +96,91 @@ def extract_raw_stress(d: dict) -> dict:
         "stress_high": d.get("stress_high")
     }
 
+def extract_raw_sleep_routes(d: dict) -> dict:
+    heart_rate = d.get("heart_rate", {})
+    hrv = d.get("hrv", {})
+    readiness = d.get("readiness", {})
+    contributors = readiness.get("contributors", {})
+
+    return {
+        # identifiers
+        "id": d.get("id"),
+        "day": d.get("day"),
+        "type": d.get("type"),
+        "ring_id": d.get("ring_id"),
+
+        # meta
+        "updated_at": d.get("meta", {}).get("updated_at"),
+        "version": d.get("meta", {}).get("version"),
+
+        # averages
+        "average_breath": d.get("average_breath"),
+        "average_heart_rate": d.get("average_heart_rate"),
+        "average_hrv": d.get("average_hrv"),
+
+        # sleep timing
+        "bedtime_start": d.get("bedtime_start"),
+        "bedtime_end": d.get("bedtime_end"),
+        "latency": d.get("latency"),
+
+        # sleep durations
+        "awake_time": d.get("awake_time"),
+        "deep_sleep_duration": d.get("deep_sleep_duration"),
+        "light_sleep_duration": d.get("light_sleep_duration"),
+        "rem_sleep_duration": d.get("rem_sleep_duration"),
+        "total_sleep_duration": d.get("total_sleep_duration"),
+        "time_in_bed": d.get("time_in_bed"),
+
+        # quality metrics
+        "efficiency": d.get("efficiency"),
+        "lowest_heart_rate": d.get("lowest_heart_rate"),
+        "restless_periods": d.get("restless_periods"),
+
+        # deltas
+        "readiness_score_delta": d.get("readiness_score_delta"),
+        "sleep_score_delta": d.get("sleep_score_delta"),
+
+        # flags / misc
+        "low_battery_alert": d.get("low_battery_alert"),
+        "sleep_algorithm_version": d.get("sleep_algorithm_version"),
+        "sleep_analysis_reason": d.get("sleep_analysis_reason"),
+
+        # heart rate (arrays kept structured, not flattened)
+        "heart_rate_interval": heart_rate.get("interval"),
+        "heart_rate_items": heart_rate.get("items"),
+        "heart_rate_timestamp": heart_rate.get("timestamp"),
+
+        # HRV
+        "hrv_interval": hrv.get("interval"),
+        "hrv_items": hrv.get("items"),
+        "hrv_timestamp": hrv.get("timestamp"),
+
+        # readiness
+        "readiness_score": readiness.get("score"),
+        "temperature_deviation": readiness.get("temperature_deviation"),
+        "temperature_trend_deviation": readiness.get("temperature_trend_deviation"),
+
+        # readiness contributors
+        "activity_balance": contributors.get("activity_balance"),
+        "body_temperature": contributors.get("body_temperature"),
+        "hrv_balance": contributors.get("hrv_balance"),
+        "previous_day_activity": contributors.get("previous_day_activity"),
+        "previous_night": contributors.get("previous_night"),
+        "recovery_index": contributors.get("recovery_index"),
+        "resting_heart_rate": contributors.get("resting_heart_rate"),
+        "sleep_balance": contributors.get("sleep_balance"),
+        "sleep_regularity": contributors.get("sleep_regularity"),
+
+        # phases / signals
+        "movement_30_sec": d.get("movement_30_sec"),
+        "sleep_phase_30_sec": d.get("sleep_phase_30_sec"),
+        "sleep_phase_5_min": d.get("sleep_phase_5_min"),
+        "app_sleep_phase_5_min": d.get("app_sleep_phase_5_min"),
+
+        # period
+        "period": d.get("period"),
+    }
+
 def process_and_save_data_generic(
         session: Session,
         model_class,
@@ -233,6 +318,47 @@ def process_stress(d: object) -> dict:
         "stress_high": stress_high,
         "stress_index": stress_index,
         "resilience_rating": resilience_rating
+    }
+
+def process_sleep_routes(d: object) -> dict:
+
+    return {
+        # identifiers
+        "id": d.id,
+        "day": d.day,
+
+        # averages
+        "average_breath": d.average_breath,
+        "average_heart_rate": d.average_heart_rate,
+        "average_hrv": d.average_hrv,
+
+        # sleep timing
+        "bedtime_start": d.bedtime_start,
+        "bedtime_end": d.bedtime_end,
+        "latency": d.latency,
+
+        # durations
+        "awake_time": d.awake_time,
+        "deep_sleep_duration": d.deep_sleep_duration,
+        "light_sleep_duration": d.light_sleep_duration,
+        "rem_sleep_duration": d.rem_sleep_duration,
+        "total_sleep_duration": d.total_sleep_duration,
+        "time_in_bed": d.time_in_bed,
+
+        # quality
+        "efficiency": d.efficiency,
+        "restless_periods": d.restless_periods,
+        "lowest_heart_rate": d.lowest_heart_rate,
+
+        # heart rate (ORM sub-object)
+        "heart_rate_interval": d.heart_rate_interval,
+        "heart_rate_items": d.heart_rate_items,
+        "heart_rate_timestamp": d.heart_rate_timestamp,
+
+        # HRV
+        "hrv_interval": d.hrv_interval,
+        "hrv_items": d.hrv_items,
+        "hrv_timestamp": d.hrv_timestamp,
     }
 
 

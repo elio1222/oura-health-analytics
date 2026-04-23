@@ -150,6 +150,10 @@ def get_insights_summary():
         "stress_summary": calculate_stress_summary()
     }
 
+@app.get("/insights/recommendations")
+def get_insights_recommendations():
+    pass
+
 @app.get("/insights/ai")
 def get_health_assistant_insight():
 
