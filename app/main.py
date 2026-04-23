@@ -7,7 +7,7 @@ from app.services.oura_service import fetch_oura_data, run, get_tokens, param_bu
 from app.repositories.db_repo import query_from_db
 from app.services.analytics_service import calculate_sleep_summary, calculate_readiness_summary, calculate_stress_summary
 from app.services.ai_service import analyze_oura_analytics
-from app.schemas.schemas import DailySleepSchema, DailyReadinessSchema, DailyStressSchema 
+from app.schemas.schemas import DailySleepSchema, DailyReadinessSchema, DailyStressSchema, SleepRouteSchema
 
 load_dotenv()
 
@@ -152,6 +152,9 @@ def get_insights_summary():
 
 @app.get("/insights/recommendations")
 def get_insights_recommendations():
+    params = param_builder(start_date=date.today() - timedelta(days=6), end_date=date.today())
+
+    # sleep_routes = 
     pass
 
 @app.get("/insights/ai")
@@ -162,16 +165,20 @@ def get_health_assistant_insight():
     sleep_query = query_from_db(type_of_data="sleep", params=params)
     readiness_query = query_from_db(type_of_data="readiness", params=params)
     stress_query = query_from_db(type_of_data="stress", params=params)
+    route_query = query_from_db(type_of_data="sleep_route", params=params)
     
     data = {
-        "sleep_data": [
+        "sleep_scores": [
             DailySleepSchema.model_validate(obj).model_dump(mode="json") for obj in sleep_query
         ],
-        "readiness_data": [
+        "readiness_scores": [
             DailyReadinessSchema.model_validate(obj).model_dump(mode="json") for obj in readiness_query
         ],
         "stress_data": [
             DailyStressSchema.model_validate(obj).model_dump(mode="json") for obj in stress_query
+        ],
+        "sleep_routes_data": [
+            SleepRouteSchema.model_validate(obj).model_dump(mode="json") for obj in route_query
         ]
     }
 

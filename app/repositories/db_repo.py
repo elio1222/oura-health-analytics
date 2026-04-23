@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from dotenv import load_dotenv
 from datetime import date, datetime
 import os
-from app.models.models import DailySleep, DailyReadiness, DailyStress
+from app.models.models import DailySleep, DailyReadiness, DailyStress, SleepRoute
 
 load_dotenv()
 
@@ -27,7 +27,8 @@ def query_from_db(type_of_data: str, params: dict = None, retries: int = 3) -> d
     table = {
         "sleep": DailySleep,
         "readiness": DailyReadiness,
-        "stress": DailyStress
+        "stress": DailyStress,
+        "sleep_route": SleepRoute 
     }
     for _ in range(retries):
         start_date = params.get("start_date")
