@@ -5,7 +5,7 @@ import os
 from datetime import date, timedelta, timezone, datetime
 from app.services.oura_service import fetch_oura_data, run, get_tokens, param_builder
 from app.repositories.db_repo import query_from_db
-from app.services.analytics_service import calculate_sleep_summary, calculate_readiness_summary, calculate_stress_summary
+from app.services.analytics_service import calculate_sleep_summary, calculate_readiness_summary, calculate_stress_summary, calculate_activity_summary
 from app.services.ai_service import analyze_oura_analytics
 from app.schemas.schemas import DailySleepSchema, DailyReadinessSchema, DailyStressSchema, SleepRouteSchema
 
@@ -65,17 +65,11 @@ def get_sleep_summary():
 """Sleep Periods (Routes in Oura API Docs)"""
 @app.get("/sleep/route")
 def get_sleep_routes(start_date: str, end_date: str):
-    url = "https://api.ouraring.com/v2/usercollection/sleep"
-
-    return fetch_oura_data(url=url, params=param_builder(start_date=start_date, end_date=end_date))
+    return query_from_db(type_of_data="sleep_route", params=param_builder(start_date=start_date, end_date=end_date))
 
 @app.get("/sleep/route/latest")
 def get_latest_sleep_routes():
-    today = date.today()
-    yesterday = today - timedelta(days=1)
-    url = "https://api.ouraring.com/v2/usercollection/sleep"
-
-    return fetch_oura_data(url=url, params=param_builder(start_date=yesterday, end_date=today))
+    return query_from_db(type_of_data="sleep_route", params=param_builder(start_date=date.today() - timedelta(days=1), end_date=date.today()))
 
 """Daily Readiness"""
 @app.get("/readiness/")
@@ -109,16 +103,15 @@ def get_stress_summary():
 """Daily Activity"""
 @app.get("/activity/")
 def get_activity(start_date: str, end_date: str):
-    url = "https://api.ouraring.com/v2/usercollection/daily_activity"
-
-    return fetch_oura_data(url=url, params=param_builder(start_date=start_date, end_date=end_date))
+    return query_from_db(type_of_data="activity", params=param_builder(start_date=start_date, end_date=end_date))
 
 @app.get("/activity/latest")
 def get_latest_activity():
-    today = date.today()
-    url = "https://api.ouraring.com/v2/usercollection/daily_activity"
+    return query_from_db(type_of_data="activity", params=param_builder(start_date=date.today() - timedelta(days=1), end_date=date.today()))
 
-    return fetch_oura_data(url=url, params=param_builder(start_date=today, end_date=today))
+@app.get("/activity/summary")
+def get_activity_summary():
+    return calculate_activity_summary()
 
 @app.get("/insights/summary")
 def get_insights_summary():
