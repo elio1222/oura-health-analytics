@@ -5,8 +5,8 @@ import os
 from datetime import date, timedelta, timezone, datetime
 from app.services.oura_service import fetch_oura_data, run, get_tokens, param_builder
 from app.repositories.db_repo import query_from_db
-from app.services.analytics_service import calculate_sleep_summary, calculate_readiness_summary, calculate_stress_summary, calculate_activity_summary
-from app.services.ai_service import analyze_oura_analytics
+from app.services.analytics_service import calculate_sleep_summary, calculate_readiness_summary, calculate_stress_summary, calculate_activity_summary, transform_sleep_route
+from app.services.ai_service import analyze_oura_analytics, analyze_sleep_route
 from app.schemas.schemas import DailySleepSchema, DailyReadinessSchema, DailyStressSchema, SleepRouteSchema
 
 load_dotenv()
@@ -68,8 +68,17 @@ def get_sleep_routes(start_date: str, end_date: str):
     return query_from_db(type_of_data="sleep_route", params=param_builder(start_date=start_date, end_date=end_date))
 
 @app.get("/sleep/route/latest")
-def get_latest_sleep_routes():
-    return query_from_db(type_of_data="sleep_route", params=param_builder(start_date=date.today() - timedelta(days=1), end_date=date.today()))
+def get_latest_sleep_route():
+    return query_from_db(type_of_data="sleep_route", params=param_builder(start_date=date.today() - timedelta(days=1), end_date=date.today() - timedelta(days=1)))
+
+@app.get("/sleep/route/latest/summary")
+def get_latest_summary_sleep_route():
+    return transform_sleep_route()
+
+@app.get("/sleep/route/insight")
+def get_ai_insight_sleep_route():
+    data = transform_sleep_route()
+    return analyze_sleep_route(user_data=data)
 
 """Daily Readiness"""
 @app.get("/readiness/")
@@ -107,7 +116,7 @@ def get_activity(start_date: str, end_date: str):
 
 @app.get("/activity/latest")
 def get_latest_activity():
-    return query_from_db(type_of_data="activity", params=param_builder(start_date=date.today() - timedelta(days=1), end_date=date.today()))
+    return query_from_db(type_of_data="activity", params=param_builder(start_date=date.today(), end_date=date.today()))
 
 @app.get("/activity/summary")
 def get_activity_summary():
@@ -123,7 +132,8 @@ def get_insights_summary():
         },
         "sleep_summary": calculate_sleep_summary(),
         "readiness_summary": calculate_readiness_summary(),
-        "stress_summary": calculate_stress_summary()
+        "stress_summary": calculate_stress_summary(),
+        "activity_summary": calculate_activity_summary()
     }
 
 @app.get("/insights/ai")

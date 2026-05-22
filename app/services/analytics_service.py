@@ -237,3 +237,47 @@ def get_all_summaries():
         "readiness_summary": calculate_readiness_summary(),
         "stress_summary": calculate_stress_summary()
     }
+
+def transform_sleep_route() -> dict:
+
+    #params = param_builder(start_date=date.today() - timedelta(days=1), end_date=date.today() - timedelta(days=1))
+    params = param_builder(start_date=date.today(), end_date=date.today())
+    data = query_from_db(type_of_data="sleep_route", params=params)
+
+    data = data[0]
+    return {
+        "day": data.day,
+
+        "sleep": {
+            "bedtime": {
+                "start": data.bedtime_start,
+                "end": data.bedtime_end
+            },
+
+            "durations_in_seconds": {
+                "total": data.total_sleep_duration,
+                "light": data.light_sleep_duration,
+                "deep": data.deep_sleep_duration,
+                "rem": data.rem_sleep_duration
+            },
+
+            "metrics": {
+                "latency": data.latency,
+                "awake_time": data.awake_time,
+                "restless_periods": data.restless_periods
+            }
+        },
+
+        "hrv": {
+            "average": data.average_hrv,
+            "interval": data.hrv_interval,
+            "timestamp": data.hrv_timestamp
+        },
+
+        "heart_rate": {
+            "lowest": data.lowest_heart_rate,
+            "average": data.average_heart_rate,
+            "interval": data.heart_rate_interval,
+            "timestamp": data.heart_rate_timestamp
+        }
+    }

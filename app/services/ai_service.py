@@ -1,7 +1,7 @@
 from openai import OpenAI
 from pydantic import BaseModel
 import json
-from typing import List, Optional
+from typing import List, Optional, Literal
 
 client = OpenAI()
 
@@ -179,6 +179,84 @@ def analyze_oura_analytics(user_data: dict) -> dict:
 
         ],
         text_format=HealthReport
+    )
+
+    return response.output_parsed
+
+SLEEP_ROUTE_SYSTEM_PROMPT = """
+You are an expert sleep and recovery analyst specializing in wearable health data, particularly Oura Ring metrics. Analyze the following sleep JSON data and generate highly specific, evidence-based insights.
+
+Your goal is to identify patterns, interpret what the data likely means, and provide actionable recommendations.
+
+Instructions:
+
+1. Analyze the data holistically rather than listing metrics individually.
+
+2. Focus on meaningful relationships between metrics, including:
+   - Sleep architecture (light, deep, REM balance)
+   - Sleep efficiency and recovery quality
+   - Heart rate trends and what low/high averages may imply
+   - HRV interpretation in relation to recovery and stress
+   - Sleep latency (falling asleep speed)
+   - Awake time and restless periods
+   - Time in bed vs total sleep
+   - Signs of overtraining, stress, poor recovery, illness, late meals, alcohol, inconsistent sleep timing, or nervous system strain if supported by evidence.
+
+3. Provide SPECIFIC insights, not generic statements.
+   
+   Bad example:
+   "Your HRV looks okay."
+
+   Good example:
+   "Your average HRV of 45 ms is somewhat suppressed relative to optimal recovery ranges for many healthy young adults. Combined with elevated average sleeping heart rate (59 bpm), this may suggest incomplete recovery, accumulated fatigue, or physiological stress from exercise, poor sleep timing, or late eating."
+
+4. Explain WHY each insight matters.
+
+5. Be careful not to overstate medical conclusions. Frame uncertain interpretations probabilistically.
+
+Important:
+- Be highly specific and data-driven.
+- Compare metrics against physiological norms when useful.
+- Prioritize insight quality over quantity.
+- Avoid generic wellness advice.
+- Only infer what is reasonably supported by the data.
+- Do not soley critize data, if user data supports a positive indication, mention it.
+- Avoid critizing unnecessary/obvious data points.
+"""
+
+class SleepSummary(BaseModel):
+    sleep_quality: Literal["Poor", "Fair", "Good", "Excellent"]
+    recovery_status: Literal["Low", "Moderate", "High"]
+    key_takeaway: str
+
+class SleepInsight(BaseModel):
+    category: str
+    title: str
+    evidence: List[str]
+    analysis: str
+    recommendation: str
+
+class SleepReport(BaseModel):
+    summary: SleepSummary
+    insights: Optional[List[SleepInsight]] = []
+    patterns_to_watch: Optional[List[str]] = []
+    recommended_actions: Optional[List[str]] = []
+
+def analyze_sleep_route(user_data: dict) -> dict:
+    response = client.responses.parse(
+        model="gpt-4o-mini",
+        input=[
+            {
+                "role": "system",
+                "content": SLEEP_ROUTE_SYSTEM_PROMPT
+            },
+            {
+                "role": "user",
+                "content": f"Here is the user's Oura data:\n{json.dumps(user_data, indent=2, default=str)}"
+            }
+
+        ],
+        text_format=SleepReport
     )
 
     return response.output_parsed
