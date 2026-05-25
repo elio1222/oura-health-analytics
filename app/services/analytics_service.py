@@ -238,48 +238,50 @@ def get_all_summaries():
         "stress_summary": calculate_stress_summary()
     }
 
-def transform_sleep_route() -> dict:
+def transform_sleep_route(params: dict = None) -> list[dict]:
 
-    # params = param_builder(start_date=date.today() - timedelta(days=1), end_date=date.today() - timedelta(days=1))
-    params = param_builder(start_date=date.today(), end_date=date.today())
     data = query_from_db(type_of_data="sleep_route", params=params)
+    # data is a list
 
-    # data is a list, must use first data index
+    if not data:
+        return []
 
-    data = data[0]
-    return {
-        "day": data.day,
+    return [
+        {
+            "day": row.day,
 
-        "sleep": {
-            "bedtime": {
-                "start": data.bedtime_start,
-                "end": data.bedtime_end
+            "sleep": {
+                "bedtime": {
+                    "start": row.bedtime_start,
+                    "end": row.bedtime_end
+                },
+
+                "durations_in_seconds": {
+                    "total": row.total_sleep_duration,
+                    "light": row.light_sleep_duration,
+                    "deep": row.deep_sleep_duration,
+                    "rem": row.rem_sleep_duration
+                },
+
+                "metrics": {
+                    "latency": row.latency,
+                    "awake_time": row.awake_time,
+                    "restless_periods": row.restless_periods
+                }
             },
 
-            "durations_in_seconds": {
-                "total": data.total_sleep_duration,
-                "light": data.light_sleep_duration,
-                "deep": data.deep_sleep_duration,
-                "rem": data.rem_sleep_duration
+            "hrv": {
+                "average": row.average_hrv,
+                "interval": row.hrv_interval,
+                "timestamp": row.hrv_timestamp
             },
 
-            "metrics": {
-                "latency": data.latency,
-                "awake_time": data.awake_time,
-                "restless_periods": data.restless_periods
+            "heart_rate": {
+                "lowest": row.lowest_heart_rate,
+                "average": row.average_heart_rate,
+                "interval": row.heart_rate_interval,
+                "timestamp": row.heart_rate_timestamp
             }
-        },
-
-        "hrv": {
-            "average": data.average_hrv,
-            "interval": data.hrv_interval,
-            "timestamp": data.hrv_timestamp
-        },
-
-        "heart_rate": {
-            "lowest": data.lowest_heart_rate,
-            "average": data.average_heart_rate,
-            "interval": data.heart_rate_interval,
-            "timestamp": data.heart_rate_timestamp
         }
-    }
+        for row in data
+    ]

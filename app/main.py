@@ -78,11 +78,15 @@ def get_latest_sleep_route():
 
 @app.get("/sleep/route/latest/summary")
 def get_latest_summary_sleep_route():
-    return transform_sleep_route()
+    # last night's summary
+    params = param_builder(start_date=date.today(), end_date=date.today())
+    return transform_sleep_route(params=params)
 
-@app.get("/sleep/route/insight")
+@app.get("/sleep/route/insights")
 def get_ai_insight_sleep_route():
-    data = transform_sleep_route()
+    # week insight
+    params = param_builder(start_date=date.today() - timedelta(days=6), end_date=date.today())
+    data = transform_sleep_route(params)
     return analyze_sleep_route(user_data=data)
 
 """Daily Readiness"""

@@ -184,9 +184,9 @@ def analyze_oura_analytics(user_data: dict) -> dict:
     return response.output_parsed
 
 SLEEP_ROUTE_SYSTEM_PROMPT = """
-You are an expert sleep and recovery analyst specializing in wearable health data, particularly Oura Ring metrics. Analyze the following sleep JSON data and generate highly specific, evidence-based insights.
+You are an expert sleep and recovery analyst specializing in wearable health data, particularly Oura Ring metrics. Analyze the following sleep JSON data and generate highly specific, evidence-based insights given to you from the last 7 days.
 
-Your goal is to identify patterns, interpret what the data likely means, and provide actionable recommendations.
+Your goal is to identify patterns, interpret what the data likely means, and provide actionable recommendations. In addition, critize or uplift the user's data. Do not soley point out every single negative thing about the user's data. Ensure that you mention good actions taken or positive things reflected from the user's sleep. 
 
 Instructions:
 
@@ -210,6 +210,8 @@ Instructions:
    Good example:
    "Your average HRV of 45 ms is somewhat suppressed relative to optimal recovery ranges for many healthy young adults. Combined with elevated average sleeping heart rate (59 bpm), this may suggest incomplete recovery, accumulated fatigue, or physiological stress from exercise, poor sleep timing, or late eating."
 
+   However, do not go overboard with scientific terms as the user might be uaware of few key terms.
+
 4. Explain WHY each insight matters.
 
 5. Be careful not to overstate medical conclusions. Frame uncertain interpretations probabilistically.
@@ -220,11 +222,11 @@ Important:
 - Prioritize insight quality over quantity.
 - Avoid generic wellness advice.
 - Only infer what is reasonably supported by the data.
-- Do not soley critize data, if user data supports a positive indication, mention it.
 - Avoid critizing unnecessary/obvious data points.
 """
 
 class SleepSummary(BaseModel):
+    sleep_summary: str
     sleep_quality: Literal["Poor", "Fair", "Good", "Excellent"]
     recovery_status: Literal["Low", "Moderate", "High"]
     key_takeaway: str
@@ -232,13 +234,14 @@ class SleepSummary(BaseModel):
 class SleepInsight(BaseModel):
     category: str
     title: str
-    evidence: List[str]
+    evidence: str
     analysis: str
     recommendation: str
 
 class SleepReport(BaseModel):
     summary: SleepSummary
-    insights: Optional[List[SleepInsight]] = []
+    # daily_sleep_insight: 
+    overall_sleep_insights: Optional[List[SleepInsight]] = []
     patterns_to_watch: Optional[List[str]] = []
     recommended_actions: Optional[List[str]] = []
 
