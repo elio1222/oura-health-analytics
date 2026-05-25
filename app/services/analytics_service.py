@@ -240,9 +240,11 @@ def get_all_summaries():
 
 def transform_sleep_route() -> dict:
 
-    #params = param_builder(start_date=date.today() - timedelta(days=1), end_date=date.today() - timedelta(days=1))
+    # params = param_builder(start_date=date.today() - timedelta(days=1), end_date=date.today() - timedelta(days=1))
     params = param_builder(start_date=date.today(), end_date=date.today())
     data = query_from_db(type_of_data="sleep_route", params=params)
+
+    # data is a list, must use first data index
 
     data = data[0]
     return {

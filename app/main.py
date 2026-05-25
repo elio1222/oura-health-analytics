@@ -69,7 +69,12 @@ def get_sleep_routes(start_date: str, end_date: str):
 
 @app.get("/sleep/route/latest")
 def get_latest_sleep_route():
-    return query_from_db(type_of_data="sleep_route", params=param_builder(start_date=date.today() - timedelta(days=1), end_date=date.today() - timedelta(days=1)))
+    # from zoneinfo import ZoneInfo
+    # sd = datetime.now(ZoneInfo("America/New_York")).date()
+    # print(sd)
+    # return query_from_db(type_of_data="sleep_route", params=param_builder(start_date=sd, end_date=sd))
+    # return query_from_db(type_of_data="sleep_route", params=param_builder(start_date=date.today() - timedelta(days=1), end_date=date.today() - timedelta(days=1)))
+    return query_from_db(type_of_data="sleep_route", params=param_builder(start_date=date.today(), end_date=date.today()))
 
 @app.get("/sleep/route/latest/summary")
 def get_latest_summary_sleep_route():
